@@ -1,50 +1,59 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
-import os
+
+from services.catalog import (
+    build_competition_detail,
+    build_competition_summaries,
+    build_country_detail,
+    build_country_summaries,
+    build_navigation,
+    build_overview_stats,
+)
 
 app = Flask(__name__)
 CORS(app)
 
-# ---------------- DATABASE SETUP ----------------
-# Create a SQLite DB file inside the backend folder
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'data.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db = SQLAlchemy(app)
+@app.get("/api/health")
+def healthcheck():
+    return jsonify({"status": "ok"})
 
-# ---------------- MODEL ----------------
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
 
-# Create the database tables (only the first time)
-with app.app_context():
-    db.create_all()
+@app.get("/api/overview")
+def overview():
+    return jsonify(build_overview_stats())
 
-# ---------------- ROUTES ----------------
-@app.route('/api/hello', methods=['GET'])
-def hello():
-    return jsonify({"message": "Hello from Flask backend with SQLite!"})
 
-@app.route('/api/data', methods=['POST'])
-def receive_data():
-    data = request.get_json()
-    name = data.get('name')
+@app.get("/api/navigation")
+def navigation():
+    return jsonify(build_navigation())
 
-    # Save the name in the database
-    new_user = User(name=name)
-    db.session.add(new_user)
-    db.session.commit()
 
-    return jsonify({"reply": f"Hey {name}, Flask stored your data in SQLite!"})
+@app.get("/api/competitions")
+def competitions():
+    return jsonify(build_competition_summaries())
 
-@app.route('/api/users', methods=['GET'])
-def get_users():
-    users = User.query.all()
-    user_list = [{"id": u.id, "name": u.name} for u in users]
-    return jsonify(user_list)
 
-if __name__ == '__main__':
+@app.get("/api/competitions/<string:slug>")
+def competition_detail(slug: str):
+    detail = build_competition_detail(slug)
+    if not detail:
+        return jsonify({"error": "Competition not found"}), 404
+    return jsonify(detail)
+
+
+@app.get("/api/countries")
+def countries():
+    return jsonify(build_country_summaries())
+
+
+@app.get("/api/countries/<string:slug>")
+def country_detail(slug: str):
+    detail = build_country_detail(slug)
+    if not detail:
+        return jsonify({"error": "Country not found"}), 404
+    return jsonify(detail)
+
+
+if __name__ == "__main__":
     app.run(debug=True)
