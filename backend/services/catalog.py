@@ -42,11 +42,12 @@ def _percentage(part: int, total: int) -> float:
 def _format_year_entries(years: List[Dict]) -> List[Dict]:
     formatted = []
     for entry in years:
+        # Use .get() with defaults to prevent KeyErrors if data is missing
         formatted.append(
             {
                 **entry,
-                "images_used_pct": _percentage(entry["images_used"], entry["uploads"]),
-                "new_uploaders_pct": _percentage(entry["new_uploaders"], entry["uploaders"]),
+                "images_used_pct": _percentage(entry.get("images_used", 0), entry.get("uploads", 0)),
+                "new_uploaders_pct": _percentage(entry.get("new_uploaders", 0), entry.get("uploaders", 0)),
             }
         )
     return formatted
@@ -59,23 +60,23 @@ def build_competition_summaries() -> List[Dict]:
         sorted_years = _format_year_entries(sorted_years_raw)
         latest = sorted_years[0]
         prev = _previous_year_entry(sorted_years_raw, latest["year"])
-        prev_uploads = prev["uploads"] if prev else None
-        trend = [entry["uploads"] for entry in sorted_years[:6]]
+        prev_uploads = prev.get("uploads", 0) if prev else None
+        trend = [entry.get("uploads", 0) for entry in sorted_years[:6]]
         summaries.append(
             {
                 "slug": comp["slug"],
                 "name": comp["name"],
                 "short_label": comp.get("short_label", comp["name"]),
-                "tagline": comp["tagline"],
-                "accent_color": comp["accent_color"],
-                "hero_image": comp["hero_image"],
+                "tagline": comp.get("tagline", ""),
+                "accent_color": comp.get("accent_color", "#000"),
+                "hero_image": comp.get("hero_image", ""),
                 "logo": comp.get("logo"),
                 "path_segment": comp.get("path_segment", comp["slug"]),
                 "latest_year": latest["year"],
-                "latest_uploads": latest["uploads"],
-                "uploads_delta": _percentage_delta(latest["uploads"], prev_uploads),
-                "countries": latest["countries"],
-                "lifetime_uploads": sum(entry["uploads"] for entry in comp["years"]),
+                "latest_uploads": latest.get("uploads", 0),
+                "uploads_delta": _percentage_delta(latest.get("uploads", 0), prev_uploads),
+                "countries": latest.get("countries", 0),
+                "lifetime_uploads": sum(entry.get("uploads", 0) for entry in comp["years"]),
                 "year_count": len(comp["years"]),
                 "trend": list(reversed(trend)),
                 "yearly_stats": sorted_years,
@@ -92,29 +93,53 @@ def build_competition_detail(slug: str) -> Optional[Dict]:
     sorted_years_raw = sorted(comp["years"], key=lambda y: y["year"], reverse=True)
     sorted_years = _format_year_entries(sorted_years_raw)
     latest = sorted_years[0]
-    upload_trend = [entry["uploads"] for entry in sorted_years[:6]]
+    upload_trend = [entry.get("uploads", 0) for entry in sorted_years[:6]]
+
+    # Safe access for delta calculation
+    prev_year_uploads = sorted_years[1].get("uploads", 0) if len(sorted_years) > 1 else None
+
+    # Add percentage calculations to country_stats for each year entry
+    formatted_yearly_stats = []
+    for year_entry in sorted_years:
+        formatted_entry = {**year_entry}
+        if "country_stats" in formatted_entry and formatted_entry["country_stats"]:
+            formatted_entry["country_stats"] = [
+                {
+                    **stat,
+                    "images_used_pct": _percentage(
+                        stat.get("images_used", 0),
+                        stat.get("uploads", 0)
+                    ),
+                    "new_uploaders_pct": _percentage(
+                        stat.get("new_uploaders", 0),
+                        stat.get("uploaders", 0)
+                    ),
+                }
+                for stat in formatted_entry["country_stats"]
+            ]
+        formatted_yearly_stats.append(formatted_entry)
 
     return {
         "slug": comp["slug"],
         "name": comp["name"],
         "short_label": comp.get("short_label", comp["name"]),
-        "tagline": comp["tagline"],
-        "hero_image": comp["hero_image"],
-        "accent_color": comp["accent_color"],
+        "tagline": comp.get("tagline", ""),
+        "hero_image": comp.get("hero_image", ""),
+        "accent_color": comp.get("accent_color", "#000"),
         "logo": comp.get("logo"),
-        "links": comp["links"],
+        "links": comp.get("links", {}),
         "spotlight": {
-            "countries": latest["countries"],
-            "uploads": latest["uploads"],
-            "images_used": latest["images_used"],
-            "uploaders": latest["uploaders"],
-            "new_uploaders": latest["new_uploaders"],
+            "countries": latest.get("countries", 0),
+            "uploads": latest.get("uploads", 0),
+            "images_used": latest.get("images_used", 0),
+            "uploaders": latest.get("uploaders", 0),
+            "new_uploaders": latest.get("new_uploaders", 0),
             "uploads_delta": _percentage_delta(
-                latest["uploads"],
-                sorted_years[1]["uploads"] if len(sorted_years) > 1 else None,
+                latest.get("uploads", 0),
+                prev_year_uploads,
             ),
         },
-        "yearly_stats": sorted_years,
+        "yearly_stats": formatted_yearly_stats,
         "trend": list(reversed(upload_trend)),
     }
 
@@ -128,11 +153,11 @@ def build_country_summaries() -> List[Dict]:
             {
                 "slug": country["slug"],
                 "name": country["name"],
-                "region": country["region"],
-                "first_year": country["first_year"],
+                "region": country.get("region", "Global"),
+                "first_year": country.get("first_year", 2025),
                 "focus": focus,
-                "spotlight": country["spotlight"],
-                "trend": [entry["uploads"] for entry in recent[-4:]],
+                "spotlight": country.get("spotlight", ""),
+                "trend": [entry.get("uploads", 0) for entry in recent[-4:]],
             }
         )
     return summaries
@@ -144,16 +169,16 @@ def build_country_detail(slug: str) -> Optional[Dict]:
         return None
 
     activity = sorted(country.get("recent_activity", []), key=lambda e: e["year"])
-    uploads = [entry["uploads"] for entry in activity]
+    uploads = [entry.get("uploads", 0) for entry in activity]
     trend = uploads[-6:]
 
     return {
         "slug": country["slug"],
         "name": country["name"],
-        "region": country["region"],
-        "focus": country["focus"],
-        "first_year": country["first_year"],
-        "spotlight": country["spotlight"],
+        "region": country.get("region", "Global"),
+        "focus": country.get("focus", []),
+        "first_year": country.get("first_year", 2025),
+        "spotlight": country.get("spotlight", ""),
         "recent_activity": activity,
         "trend": trend,
     }
@@ -165,17 +190,19 @@ def build_overview_stats() -> Dict:
 
     for comp in COMPETITIONS:
         for entry in comp["years"]:
-            totals["uploads"] += entry["uploads"]
-            totals["images_used"] += entry["images_used"]
-            totals["countries_total"] = max(totals["countries_total"], entry["countries"])
-        latest = _latest_year_entry(comp["years"])
-        latest_uploads.append(latest["uploads"])
+            totals["uploads"] += entry.get("uploads", 0)
+            totals["images_used"] += entry.get("images_used", 0)
+            totals["countries_total"] = max(totals["countries_total"], entry.get("countries", 0))
+        
+        if comp["years"]:
+            latest = _latest_year_entry(comp["years"])
+            latest_uploads.append(latest.get("uploads", 0))
 
     return {
         "total_uploads": totals["uploads"],
         "total_images_used": totals["images_used"],
         "max_countries": totals["countries_total"],
-        "avg_latest_uploads": int(mean(latest_uploads)),
+        "avg_latest_uploads": int(mean(latest_uploads)) if latest_uploads else 0,
     }
 
 
@@ -203,4 +230,3 @@ def build_navigation() -> List[Dict]:
             }
         )
     return nav
-

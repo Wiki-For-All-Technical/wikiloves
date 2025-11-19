@@ -39,6 +39,7 @@ export const useCatalogStore = defineStore('catalog', {
     async loadNavigation() {
       if (this.loading.navigation) return
       this.loading.navigation = true
+      this.error = null
       try {
         const nav = await fetchNavigation()
         this.navigation = nav
@@ -48,8 +49,10 @@ export const useCatalogStore = defineStore('catalog', {
           }
           return acc
         }, {})
+        console.log('Navigation loaded:', nav.length, 'entries, segment lookup:', this.segmentLookup)
       } catch (error) {
-        this.error = error
+        console.error('Error loading navigation:', error)
+        this.error = error.response?.data || error.message || error
       } finally {
         this.loading.navigation = false
       }
@@ -77,10 +80,13 @@ export const useCatalogStore = defineStore('catalog', {
     async loadCompetitionDetail(slug) {
       this.loading.competitionDetail = true
       this.competitionDetail = null
+      this.error = null
       try {
         this.competitionDetail = await fetchCompetition(slug)
+        console.log('Competition detail loaded successfully:', slug, this.competitionDetail)
       } catch (error) {
-        this.error = error
+        console.error('Error loading competition detail:', error)
+        this.error = error.response?.data || error.message || error
       } finally {
         this.loading.competitionDetail = false
       }
