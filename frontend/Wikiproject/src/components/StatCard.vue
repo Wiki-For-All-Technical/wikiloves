@@ -55,64 +55,147 @@ function formatNum(num) {
 
 <style scoped>
 .stat-card {
-  background: #fff;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  border-top-width: 3px;
-  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--bg-card, #ffffff) 0%, var(--bg-secondary, #f8f9fa) 100%);
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-top-width: 4px;
+  padding: 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  gap: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--card-accent-color, v-bind(color));
+  transform-origin: left;
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.stat-card:hover::before {
+  transform: scaleX(1);
 }
 
 .stat-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
 }
 
 .stat-icon {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  transition: transform 0.2s ease;
+}
+
+.stat-card:hover .stat-icon {
+  transform: scale(1.1);
 }
 
 .stat-label {
-  font-size: 0.9rem;
-  color: #666;
-  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .stat-value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #2c3e50;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--text-primary, #1f2937);
   line-height: 1;
+  background: linear-gradient(135deg, var(--text-primary, #1f2937) 0%, var(--text-secondary, #374151) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover .stat-value {
+  transform: scale(1.05);
 }
 
 .stat-delta {
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.875rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  width: fit-content;
+  transition: all 0.2s ease;
 }
 
 .stat-delta.positive {
-  color: #22c55e;
+  color: #059669;
+  background-color: #d1fae5;
 }
 
 .stat-delta.negative {
-  color: #ef4444;
+  color: #dc2626;
+  background-color: #fee2e2;
+}
+
+.stat-delta::before {
+  content: '';
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-right: 0.25rem;
+}
+
+.stat-delta.positive::before {
+  content: '↑';
+  font-size: 0.75rem;
+}
+
+.stat-delta.negative::before {
+  content: '↓';
+  font-size: 0.75rem;
 }
 
 .stat-subvalue {
-  font-size: 1.1rem;
-  color: #666;
-  margin-top: 0.25rem;
+  font-size: 1.125rem;
+  color: var(--text-secondary, #4b5563);
+  margin-top: 0.5rem;
+  font-weight: 600;
 }
 
 .stat-sublabel {
-  font-size: 0.85rem;
-  color: #999;
-  font-weight: 400;
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #9ca3af);
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .stat-card {
+    padding: 1.25rem;
+  }
+  
+  .stat-value {
+    font-size: 2rem;
+  }
 }
 </style>
 

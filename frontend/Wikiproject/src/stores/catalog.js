@@ -49,7 +49,6 @@ export const useCatalogStore = defineStore('catalog', {
           }
           return acc
         }, {})
-        console.log('Navigation loaded:', nav.length, 'entries, segment lookup:', this.segmentLookup)
       } catch (error) {
         console.error('Error loading navigation:', error)
         this.error = error.response?.data || error.message || error
@@ -83,7 +82,6 @@ export const useCatalogStore = defineStore('catalog', {
       this.error = null
       try {
         this.competitionDetail = await fetchCompetition(slug)
-        console.log('Competition detail loaded successfully:', slug, this.competitionDetail)
       } catch (error) {
         console.error('Error loading competition detail:', error)
         this.error = error.response?.data || error.message || error
