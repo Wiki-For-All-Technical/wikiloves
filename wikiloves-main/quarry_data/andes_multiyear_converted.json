@@ -1,0 +1,27 @@
+[
+  {
+    "year": 2020,
+    "countries": 3,
+    "uploads": 28,
+    "uploaders": 5,
+    "images_used": 28,
+    "new_uploaders": 0
+  },
+  {
+    "year": 2019,
+    "countries": 5,
+    "uploads": 99,
+    "uploaders": 9,
+    "images_used": 99,
+    "new_uploaders": 0
+  },
+  {
+    "year": 2018,
+    "countries": 4,
+    "uploads": 50,
+    "uploaders": 8,
+    "images_used": 50,
+    "new_uploaders": 0
+  }
+]
+
