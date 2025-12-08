@@ -83,14 +83,24 @@ def process_country_data(data: List[Dict]) -> Dict[int, Dict]:
         'uploaders': 0,
         'images_used': 0,
         'new_uploaders': 0,
+        'countries': 0,
         'country_stats': []
     })
     
     for entry in data:
         year = entry.get('year')
-        country = entry.get('country', 'Global')
+        country = entry.get('country')
         
-        if country == 'Global':
+        if country is None:
+            # No country field - this is a yearly summary row (like africa_multiyear)
+            years_data[year]['uploads'] = entry.get('uploads', 0)
+            years_data[year]['uploaders'] = entry.get('uploaders', 0)
+            years_data[year]['images_used'] = entry.get('images_used', 0)
+            years_data[year]['new_uploaders'] = entry.get('new_uploaders', 0)
+            # Use the countries count from the data if available
+            if 'countries' in entry:
+                years_data[year]['countries'] = entry.get('countries', 0)
+        elif country == 'Global':
             # Global row - use for totals
             years_data[year]['uploads'] = entry.get('uploads', 0)
             years_data[year]['uploaders'] = entry.get('uploaders', 0)
@@ -113,7 +123,10 @@ def process_country_data(data: List[Dict]) -> Dict[int, Dict]:
         for i, stat in enumerate(country_stats, 1):
             stat['rank'] = i
         year_data['country_stats'] = country_stats
-        year_data['countries'] = len(country_stats)
+        
+        # Update countries count based on country_stats if we have them
+        if country_stats:
+            year_data['countries'] = len(country_stats)
         
         # If no Global row, calculate from countries
         if year_data['uploads'] == 0 and country_stats:
@@ -313,5 +326,10 @@ def write_catalog(output_path: str, competitions: List[Dict]):
 
 if __name__ == '__main__':
     generate_new_catalog()
+
+
+
+
+
 
 

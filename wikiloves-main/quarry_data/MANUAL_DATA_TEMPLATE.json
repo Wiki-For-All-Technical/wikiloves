@@ -1,0 +1,59 @@
+{
+  "instructions": "Fill in this template with data from https://editathonstat.toolforge.org and https://meta.wikimedia.org/wiki/wiki_loves_x_campaigns",
+  "campaigns": {
+    "africa": {
+      "name": "Wiki Loves Africa",
+      "years": [
+        {
+          "year": 2025,
+          "uploads": 0,
+          "uploaders": 0,
+          "images_used": 0,
+          "new_uploaders": 0,
+          "country_stats": [
+            {"name": "Nigeria", "uploads": 0, "uploaders": 0, "images_used": 0, "new_uploaders": 0},
+            {"name": "Ghana", "uploads": 0, "uploaders": 0, "images_used": 0, "new_uploaders": 0},
+            {"name": "Egypt", "uploads": 0, "uploaders": 0, "images_used": 0, "new_uploaders": 0},
+            {"name": "Kenya", "uploads": 0, "uploaders": 0, "images_used": 0, "new_uploaders": 0},
+            {"name": "South Africa", "uploads": 0, "uploaders": 0, "images_used": 0, "new_uploaders": 0}
+          ]
+        },
+        {
+          "year": 2024,
+          "uploads": 0,
+          "uploaders": 0,
+          "images_used": 0,
+          "new_uploaders": 0,
+          "country_stats": []
+        }
+      ]
+    },
+    "folklore": {
+      "name": "Wiki Loves Folklore",
+      "years": [
+        {
+          "year": 2025,
+          "uploads": 0,
+          "uploaders": 0,
+          "images_used": 0,
+          "new_uploaders": 0,
+          "country_stats": []
+        }
+      ]
+    },
+    "science": {
+      "name": "Wiki Science Competition",
+      "years": [
+        {
+          "year": 2024,
+          "uploads": 0,
+          "uploaders": 0,
+          "images_used": 0,
+          "new_uploaders": 0,
+          "country_stats": []
+        }
+      ]
+    }
+  }
+}
+
