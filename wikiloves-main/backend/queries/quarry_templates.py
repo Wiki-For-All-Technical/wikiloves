@@ -253,6 +253,211 @@ def get_campaign_dates(campaign_category: str, year: int) -> tuple:
     return (start_date, end_date)
 
 
+# Template for getting uploader statistics by country
+UPLOADER_STATS_TEMPLATE = """
+-- Wiki Loves {campaign_name} - Uploader Statistics for {year} in {country}
+-- Returns list of uploaders with their upload counts, images used, and registration dates
+-- Database: commonswiki_p
+-- 
+-- This query extracts:
+-- - Uploader username
+-- - Number of images uploaded
+-- - Number of images used in wikis
+-- - User registration date
+
+SELECT 
+    a.actor_name AS username,
+    COUNT(DISTINCT i.img_name) AS images,
+    COUNT(DISTINCT CASE 
+        WHEN EXISTS (
+            SELECT 1 
+            FROM imagelinks il 
+            WHERE il.il_from = p.page_id
+        ) THEN i.img_name 
+    END) AS images_used,
+    DATE_FORMAT(u.user_registration, '%Y-%m-%d') AS registration
+FROM categorylinks cl
+JOIN page p ON cl.cl_from = p.page_id
+JOIN image i ON i.img_name = p.page_title 
+    AND p.page_namespace = 6 
+    AND p.page_is_redirect = 0
+JOIN actor_image a ON i.img_actor = a.actor_id
+LEFT JOIN actor ON a.actor_id = actor.actor_id
+LEFT JOIN user u ON actor.actor_user = u.user_id
+WHERE cl.cl_type = 'file'
+  AND cl.cl_to = 'Images_from_Wiki_Loves_{campaign_name}_{year}_in_{country}'
+GROUP BY a.actor_name, u.user_registration
+ORDER BY images DESC;
+"""
+
+def generate_all_uploaders_query(campaign_name: str, campaign_slug: str, quarry_category: str = None) -> str:
+    """
+    Generate a comprehensive Quarry query to get ALL uploader data for ALL years and ALL countries for a campaign.
+    This is much more efficient than individual queries per country/year.
+    
+    Args:
+        campaign_name: Full campaign name (e.g., "Wiki Loves Earth")
+        campaign_slug: Campaign slug/path_segment (e.g., "earth")
+        quarry_category: Optional category name for Quarry (e.g., "earth", "monuments")
+    
+    Returns:
+        SQL query string ready to paste into Quarry
+    """
+    if not quarry_category:
+        quarry_category = campaign_slug
+    
+    campaign_category = campaign_name.replace(' ', '_')
+    category_capitalized = quarry_category.capitalize()
+    
+    query = f"""-- {campaign_name} - ALL Uploader Statistics (All Years, All Countries)
+-- Copy this query into Quarry: https://quarry.wmcloud.org
+-- Database: commonswiki_p
+-- 
+-- Campaign: {campaign_name}
+-- This query fetches uploader data for ALL years and ALL countries in one go
+--
+-- IMPORTANT: This query may take 10-30 minutes depending on campaign size
+-- After completion, download as JSON and process with:
+-- python backend/scripts/process_all_uploaders.py <file.json> {campaign_slug}
+--
+-- Category discovery query (run this first to verify patterns):
+-- SELECT DISTINCT cl.cl_to 
+-- FROM categorylinks cl 
+-- WHERE cl.cl_type = 'file' 
+--   AND (cl.cl_to LIKE '%{campaign_category}%' OR cl.cl_to LIKE '%Wiki_Loves_{category_capitalized}%')
+--   AND cl.cl_to REGEXP '[0-9]{{4}}$'
+-- ORDER BY cl.cl_to;
+
+SELECT 
+    CAST(SUBSTRING_INDEX(
+        CASE 
+            WHEN cl.cl_to LIKE '%_in_%' THEN
+                SUBSTRING_INDEX(cl.cl_to, '_in_', 1)
+            ELSE cl.cl_to
+        END, '_', -1) AS UNSIGNED) AS year,
+    CASE 
+        WHEN cl.cl_to LIKE '%_in_%' THEN
+            REPLACE(SUBSTRING_INDEX(cl.cl_to, '_in_', -1), '_', ' ')
+        ELSE 'Global'
+    END AS country,
+    a.actor_name AS username,
+    COUNT(DISTINCT i.img_name) AS images,
+    COUNT(DISTINCT CASE 
+        WHEN EXISTS (
+            SELECT 1 
+            FROM imagelinks il 
+            WHERE il.il_from = p.page_id
+        ) THEN i.img_name 
+    END) AS images_used,
+    DATE_FORMAT(u.user_registration, '%Y-%m-%d') AS registration
+FROM categorylinks cl
+JOIN page p ON cl.cl_from = p.page_id
+JOIN image i ON i.img_name = p.page_title 
+    AND p.page_namespace = 6 
+    AND p.page_is_redirect = 0
+JOIN actor_image a ON i.img_actor = a.actor_id
+LEFT JOIN actor ON a.actor_id = actor.actor_id
+LEFT JOIN user u ON actor.actor_user = u.user_id
+WHERE cl.cl_type = 'file'
+  AND (
+    cl.cl_to LIKE 'Images_from_{campaign_category}_%'
+    OR cl.cl_to LIKE 'Images_from_Wiki_Loves_{category_capitalized}_%'
+    OR cl.cl_to LIKE 'Wiki_Loves_{category_capitalized}_%'
+  )
+  AND cl.cl_to REGEXP '[0-9]{{4}}$'
+  AND CAST(SUBSTRING_INDEX(
+    CASE 
+        WHEN cl.cl_to LIKE '%_in_%' THEN
+            SUBSTRING_INDEX(cl.cl_to, '_in_', 1)
+        ELSE cl.cl_to
+    END, '_', -1) AS UNSIGNED) BETWEEN 2010 AND 2025
+GROUP BY year, country, a.actor_name, u.user_registration
+ORDER BY year DESC, country, images DESC;
+
+-- Export this as JSON with filename: {campaign_slug}_all_uploaders.json
+-- Expected output: Array of objects with year, country, username, images, images_used, registration
+"""
+    
+    return query
+
+
+def generate_uploader_query(campaign_name: str, campaign_slug: str, year: int, country: str, start_date: str = None, end_date: str = None) -> str:
+    """
+    Generate a Quarry query to get uploader statistics for a specific campaign, year, and country.
+    
+    Args:
+        campaign_name: Full campaign name (e.g., "Wiki Loves Earth")
+        campaign_slug: Campaign slug (e.g., "earth")
+        year: Campaign year (e.g., 2024)
+        country: Country name (e.g., "Albania")
+        start_date: Start date in YYYYMMDDHHMMSS format (optional)
+        end_date: End date in YYYYMMDDHHMMSS format (optional)
+    
+    Returns:
+        SQL query string ready to paste into Quarry
+    """
+    # Format campaign name for category (replace spaces with underscores)
+    campaign_category = campaign_name.replace(' ', '_')
+    
+    # Common category patterns
+    category_patterns = [
+        f"Images_from_{campaign_category}_{year}_in_{country.replace(' ', '_')}",
+        f"Images_from_Wiki_Loves_{campaign_slug.capitalize()}_{year}_in_{country.replace(' ', '_')}",
+        f"Images_from_{campaign_category}_{year}_in_{country}",
+    ]
+    
+    # Build WHERE clause with multiple category patterns
+    category_conditions = " OR\n".join([f"  cl.cl_to = '{pattern}'" for pattern in category_patterns])
+    
+    query = f"""-- {campaign_name} - Uploader Statistics for {year} in {country}
+-- Copy this query into Quarry: https://quarry.wmcloud.org
+-- Database: commonswiki_p
+-- 
+-- Campaign: {campaign_name}
+-- Year: {year}
+-- Country: {country}
+--
+-- IMPORTANT: First run a category discovery query to find the exact category name!
+-- Then replace the category patterns below with the actual category.
+--
+-- Category discovery query:
+-- SELECT DISTINCT cl.cl_to 
+-- FROM categorylinks cl 
+-- WHERE cl.cl_type = 'file' 
+--   AND cl.cl_to LIKE '%{campaign_category}%{year}%{country}%'
+-- ORDER BY cl.cl_to;
+
+SELECT 
+    a.actor_name AS username,
+    COUNT(DISTINCT i.img_name) AS images,
+    COUNT(DISTINCT CASE 
+        WHEN EXISTS (
+            SELECT 1 
+            FROM imagelinks il 
+            WHERE il.il_from = p.page_id
+        ) THEN i.img_name 
+    END) AS images_used,
+    DATE_FORMAT(u.user_registration, '%Y-%m-%d') AS registration
+FROM categorylinks cl
+JOIN page p ON cl.cl_from = p.page_id
+JOIN image i ON i.img_name = p.page_title 
+    AND p.page_namespace = 6 
+    AND p.page_is_redirect = 0
+JOIN actor_image a ON i.img_actor = a.actor_id
+LEFT JOIN actor ON a.actor_id = actor.actor_id
+LEFT JOIN user u ON actor.actor_user = u.user_id
+WHERE cl.cl_type = 'file'
+  AND (
+{category_conditions}
+  )
+GROUP BY a.actor_name, u.user_registration
+ORDER BY images DESC;
+
+-- Export this as JSON with filename: {campaign_slug}_{year}_{country}_users.json
+"""
+    
+    return query
+
 # Example usage queries for common campaigns
 EXAMPLE_QUERIES = {
     "monuments_2024": format_query(

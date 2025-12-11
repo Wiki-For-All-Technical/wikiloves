@@ -15,9 +15,19 @@ const router = createRouter({
       component: () => import('../views/ComparisonView.vue'),
     },
     {
+      path: '/images',
+      name: 'images',
+      component: () => import('../views/ImagesView.vue'),
+    },
+    {
       path: '/country/:slug',
       name: 'country',
       component: () => import('../views/CountryView.vue'),
+    },
+    {
+      path: '/:segment/:year/:country/users',
+      name: 'campaign-country-users',
+      component: () => import('../views/CampaignCountryUsersView.vue'),
     },
     {
       path: '/:segment/:year/:country',

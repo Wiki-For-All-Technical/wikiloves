@@ -491,3 +491,118 @@ def build_trend_analysis(campaign_slugs: Optional[List[str]] = None) -> Dict:
         "trends": trends,
         "campaign_count": len(trends),
     }
+
+
+def build_uploader_data(campaign_slug: str, year: int, country: str) -> Optional[Dict]:
+    """
+    Get uploader statistics for a specific campaign, year, and country.
+    First tries to load from stored data, otherwise returns query instructions.
+    
+    Args:
+        campaign_slug: The campaign slug (e.g., 'earth')
+        year: The year (e.g., 2025)
+        country: The country name (e.g., 'Albania')
+    
+    Returns:
+        Dictionary with uploader data or query information
+    """
+    competition = _find_competition(campaign_slug)
+    if not competition:
+        return None
+    
+    campaign_name = competition["name"]
+    
+    # Try to load stored uploader data
+    try:
+        import sys
+        import os
+        scripts_path = os.path.join(os.path.dirname(__file__), '..', 'scripts')
+        if scripts_path not in sys.path:
+            sys.path.insert(0, scripts_path)
+        from process_uploader_data import load_uploader_data
+        uploaders = load_uploader_data(campaign_slug, year, country)
+        
+        if uploaders:
+            # Return actual data
+            return {
+                "campaign": campaign_name,
+                "campaign_slug": campaign_slug,
+                "year": year,
+                "country": country,
+                "uploaders": uploaders,
+                "total_uploaders": len(uploaders),
+                "has_data": True
+            }
+    except (ImportError, Exception) as e:
+        # If loading fails, continue to generate query
+        pass
+    
+    # If no stored data, generate query instructions
+    # First try to generate comprehensive query (all years/countries)
+    try:
+        from queries.quarry_templates import generate_all_uploaders_query, generate_uploader_query
+        
+        # Get quarry_category from metadata if available
+        try:
+            import sys
+            import os
+            data_path = os.path.join(os.path.dirname(__file__), '..', 'data')
+            if data_path not in sys.path:
+                sys.path.insert(0, data_path)
+            from campaigns_metadata import get_campaign_by_slug, get_campaign_by_prefix
+            
+            # Try to find campaign metadata
+            meta_campaign = get_campaign_by_slug(campaign_slug)
+            if not meta_campaign:
+                # Try by path_segment
+                all_campaigns = get_all_campaigns()
+                for camp in all_campaigns:
+                    if camp.get('path_segment') == campaign_slug:
+                        meta_campaign = camp
+                        break
+            
+            quarry_category = meta_campaign.get('quarry_category') if meta_campaign else None
+        except:
+            quarry_category = None
+        
+        # Offer comprehensive query option (gets all years/countries at once)
+        comprehensive_query = generate_all_uploaders_query(
+            campaign_name=campaign_name,
+            campaign_slug=campaign_slug,
+            quarry_category=quarry_category
+        )
+        
+        # Also generate specific query for this year/country (as fallback option)
+        specific_query = generate_uploader_query(
+            campaign_name=campaign_name,
+            campaign_slug=campaign_slug,
+            year=year,
+            country=country
+        )
+        
+        query = comprehensive_query  # Prefer comprehensive query
+        
+        return {
+            "campaign": campaign_name,
+            "campaign_slug": campaign_slug,
+            "year": year,
+            "country": country,
+            "query": query,
+            "instructions": {
+                "step1": "Go to https://quarry.wmcloud.org/ and login with your Wikimedia account",
+                "step2": "Click 'New Query'",
+                "step3": "Select database: commonswiki_p",
+                "step4": "Copy and paste the comprehensive query below (gets ALL years and ALL countries)",
+                "step5": "Click 'Run' (query may take 10-30 minutes for large campaigns)",
+                "step6": "Once complete, click 'Download' and select JSON format",
+                "step7": f"Process the file using: python backend/scripts/process_all_uploaders.py <file.json> {campaign_slug}",
+                "note": "This comprehensive query will process ALL years and countries at once, then organize them automatically."
+            },
+            "query_type": "comprehensive",
+            "specific_query": specific_query,  # Also include specific query as alternative
+            "quarry_url": "https://quarry.wmcloud.org/",
+            "database": "commonswiki_p",
+            "has_data": False
+        }
+    except ImportError:
+        return None

@@ -57,3 +57,14 @@ Thumbs.db
 # Project specific
 *.db-journal
 
+# Temporary data files (raw quarry exports, debug files)
+# Exclude raw quarry exports but keep converted files
+wiki_loves_campaign_data/*.json
+!wiki_loves_campaign_data/earth_complete_with_countries.json
+quarry_data/*multiyear.json
+quarry_data/*new_uploaders*.json
+!quarry_data/*_converted.json
+!quarry_data/MANUAL_DATA_TEMPLATE.json
+quarry_data/*_discrepancies*.txt
+quarry_data/*_summary.txt
+

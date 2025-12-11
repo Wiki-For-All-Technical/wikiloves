@@ -13,6 +13,7 @@ import QuickStats from '@/components/QuickStats.vue'
 import TimelineSlider from '@/components/TimelineSlider.vue'
 import ComparisonView from '@/components/ComparisonView.vue'
 import StatsCalculator from '@/components/StatsCalculator.vue'
+import CountryStatsSection from '@/components/CountryStatsSection.vue'
 
 const route = useRoute()
 const catalog = useCatalogStore()
@@ -341,15 +342,36 @@ function formatNum(num) {
                   {{ stat.name }}
                 </router-link>
               </td>
-              <td class="num-col">{{ formatNum(stat.uploads) }}</td>
+              <td class="num-col">
+                <a
+                  :href="`/images?event=${competition.slug}&year=${currentYear}&country=${encodeURIComponent(stat.name)}`"
+                  class="uploads-link"
+                >
+                  {{ formatNum(stat.uploads) }}
+                </a>
+              </td>
               <td class="num-col">{{ formatNum(stat.images_used) }} ({{ Math.round(stat.images_used_pct || 0) }}%)</td>
-              <td class="num-col">{{ formatNum(stat.uploaders) }}</td>
+              <td class="num-col">
+                <router-link
+                  :to="`/${route.params.segment}/${currentYear}/${stat.name}/users`"
+                  class="uploaders-link"
+                >
+                  {{ formatNum(stat.uploaders) }}
+                </router-link>
+              </td>
               <td class="num-col">{{ formatNum(stat.new_uploaders) }} ({{ Math.round(stat.new_uploaders_pct || 0) }}%)</td>
             </tr>
           </tbody>
         </table>
       </div>
     </section>
+
+    <!-- Country Statistics Section (all countries across all years) -->
+    <CountryStatsSection
+      v-if="competition.yearly_stats && competition.yearly_stats.length > 0"
+      :yearly-stats="competition.yearly_stats"
+      :campaign-slug="competition.slug"
+    />
   </div>
 </template>
 

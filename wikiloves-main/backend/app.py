@@ -13,6 +13,7 @@ from services.catalog import (
     build_cross_campaign_comparison,
     build_trend_analysis,
     build_campaign_country_detail,
+    build_uploader_data,
 )
 
 app = Flask(__name__)
@@ -84,6 +85,18 @@ def campaign_country_detail(campaign_slug: str, year: int, country: str):
     if not detail:
         return jsonify({"error": "Data not found"}), 404
     return jsonify(detail)
+
+
+@app.get("/api/campaigns/<string:campaign_slug>/<int:year>/<string:country>/users")
+def campaign_country_users(campaign_slug: str, year: int, country: str):
+    """
+    Get uploader statistics for a specific country in a campaign year.
+    Returns actual data if available, otherwise returns Quarry query instructions.
+    """
+    data = build_uploader_data(campaign_slug, year, country)
+    if not data:
+        return jsonify({"error": "Campaign not found"}), 404
+    return jsonify(data)
 
 
 if __name__ == "__main__":

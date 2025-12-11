@@ -20,7 +20,7 @@ export default defineConfig({
     },
   },
   server: {
-    host: '127.0.0.1', // Listen on IPv4 localhost
+    host: true, // Listen on all local IPs (localhost, 127.0.0.1, etc.)
     port: 5173,
     strictPort: false, // Allow port to be changed if 5173 is taken
   },
