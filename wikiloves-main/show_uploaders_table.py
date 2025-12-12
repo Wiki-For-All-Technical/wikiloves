@@ -90,3 +90,7 @@ for year in sorted(data_by_year_country.keys(), reverse=True):
         print(f"  ... and {len(sorted_countries) - 3} more countries/regions")
     print()
 
+
+
+
+

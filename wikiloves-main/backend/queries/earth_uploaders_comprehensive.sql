@@ -1,9 +1,16 @@
 -- ============================================
--- EARTH - COMPLETE DATASET WITH COUNTRY BREAKDOWN
+-- WIKI LOVES EARTH - COMPREHENSIVE UPLOADER DATA
 -- ============================================
--- This query gets ALL years (2013-2025) with country-level statistics
--- Returns multiple rows per year (one per country)
+-- Gets uploader statistics for ALL years (2013-2025) and ALL countries
 -- Database: commonswiki_p
+-- 
+-- This query fetches individual uploader data grouped by year and country
+-- IMPORTANT: This query may take 15-30 minutes to execute
+--
+-- Copy this into Quarry: https://quarry.wmcloud.org
+-- After completion, download as JSON: earth_all_uploaders.json
+-- Then process with: python backend/scripts/process_all_uploaders.py earth_all_uploaders.json earth
+--
 -- ============================================
 
 SELECT 
@@ -18,12 +25,13 @@ SELECT
             REPLACE(SUBSTRING_INDEX(cl.cl_to, '_in_', -1), '_', ' ')
         ELSE 'Global'
     END AS country,
-    COUNT(DISTINCT i.img_name) AS uploads,
-    COUNT(DISTINCT a.actor_name) AS uploaders,
+    a.actor_name AS username,
+    COUNT(DISTINCT i.img_name) AS images,
     COUNT(DISTINCT CASE 
         WHEN il_used.il_to IS NOT NULL THEN i.img_name 
     END) AS images_used,
-    COUNT(DISTINCT CASE 
+    DATE_FORMAT(u.user_registration, '%Y%m%d%H%i%s') AS user_registration,
+    CASE 
         WHEN u.user_registration >= CONCAT(
             CAST(SUBSTRING_INDEX(
                 CASE 
@@ -38,8 +46,9 @@ SELECT
                             SUBSTRING_INDEX(cl.cl_to, '_in_', 1)
                         ELSE cl.cl_to
                     END, '_', -1) AS UNSIGNED), '0531235959')
-        THEN a.actor_name
-    END) AS new_uploaders
+        THEN 1
+        ELSE 0
+    END AS is_new_uploader
 FROM categorylinks cl
 JOIN page p ON cl.cl_from = p.page_id
     AND p.page_namespace = 6 
@@ -51,12 +60,8 @@ LEFT JOIN actor act ON a.actor_id = act.actor_id
 LEFT JOIN user u ON act.actor_user = u.user_id
 WHERE cl.cl_type = 'file'
   AND (
-    -- Main category patterns
     cl.cl_to LIKE 'Images_from_Wiki_Loves_Earth_%'
     OR cl.cl_to LIKE 'Wiki_Loves_Earth_%'
-    -- Country-specific patterns
-    OR cl.cl_to LIKE 'Images_from_Wiki_Loves_Earth_%_in_%'
-    OR cl.cl_to LIKE 'Wiki_Loves_Earth_%_in_%'
   )
   AND CAST(SUBSTRING_INDEX(
     CASE 
@@ -64,23 +69,23 @@ WHERE cl.cl_type = 'file'
             SUBSTRING_INDEX(cl.cl_to, '_in_', 1)
         ELSE cl.cl_to
     END, '_', -1) AS UNSIGNED) BETWEEN 2013 AND 2025
-GROUP BY year, country
-ORDER BY year DESC, uploads DESC;
+GROUP BY year, country, a.actor_name, u.user_registration
+ORDER BY year DESC, country, images DESC;
 
 -- ============================================
 -- NOTES:
 -- ============================================
--- This query returns multiple rows per year (one per country)
--- Format: [year, country, uploads, uploaders, images_used, new_uploaders]
--- 
--- Country extraction:
--- - Categories like "Images_from_Wiki_Loves_Earth_2013_in_Ukraine" → country: "Ukraine"
--- - Categories like "Images_from_Wiki_Loves_Earth_2013" → country: "Global"
+-- Output columns:
+-- - year: Campaign year (2013-2025)
+-- - country: Country name or 'Global'
+-- - username: Actor name (uploader username)
+-- - images: Number of images uploaded by this user in this country/year
+-- - images_used: Number of images used in wikis
+-- - user_registration: User registration timestamp
+-- - is_new_uploader: 1 if registered during competition period (May 1-31), 0 otherwise
 --
--- Expected execution time: 5-10 minutes (due to country breakdown)
--- 
--- After running, you'll need to:
--- 1. Download as JSON
--- 2. Use merge_earth_data.py to combine with year totals
--- 3. Process with updated process_all_campaigns.py
-
+-- After running this query:
+-- 1. Export as JSON: earth_all_uploaders.json
+-- 2. Place in: quarry_data/uploaders/
+-- 3. Process with: python backend/scripts/process_all_uploaders.py quarry_data/uploaders/earth_all_uploaders.json earth
+-- 4. This will create individual files: earth_{year}_{country}_users.json

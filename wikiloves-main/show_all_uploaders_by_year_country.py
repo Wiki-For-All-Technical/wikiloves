@@ -106,3 +106,7 @@ for i, (country, stats) in enumerate(sorted_countries[:10], 1):
     years_str = ', '.join(map(str, sorted(stats['years'])))
     print(f"{i:2}. {country:<50} {stats['uploaders']:>3} uploaders, {stats['images']:>4} images (Years: {years_str})")
 
+
+
+
+
