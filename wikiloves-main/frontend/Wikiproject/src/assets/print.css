@@ -1,0 +1,74 @@
+@media print {
+  .wiki-shell {
+    display: block;
+  }
+  
+  .header-actions,
+  .theme-toggle,
+  .share-menu,
+  .print-button,
+  .export-button,
+  .table-filters,
+  .timeline-slider,
+  .chart-controls {
+    display: none !important;
+  }
+  
+  .content-area {
+    padding: 0;
+    background: white;
+  }
+  
+  .competition-view,
+  .home-view {
+    max-width: 100%;
+  }
+  
+  .comp-header,
+  .competition-block {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  .table-section,
+  .line-chart-section,
+  .area-chart-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  table {
+    page-break-inside: auto;
+  }
+  
+  tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  thead {
+    display: table-header-group;
+  }
+  
+  tfoot {
+    display: table-footer-group;
+  }
+  
+  a {
+    text-decoration: underline;
+    color: #000;
+  }
+  
+  a[href^="http"]:after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
+  }
+  
+  .stat-card,
+  .quick-stats {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
+

@@ -1,0 +1,19 @@
+{
+  "campaign_name": "Wiki Loves Africa",
+  "slug": "africa",
+  "source": "static",
+  "updated": "2025-02-18",
+  "years": [
+    { "year": 2014, "countries": 44, "uploads": 4901, "images_used": 1436, "images_used_pct": 29, "uploaders": 821, "new_uploaders": 699, "new_uploaders_pct": 85 },
+    { "year": 2015, "countries": 44, "uploads": 5649, "images_used": 1084, "images_used_pct": 19, "uploaders": 671, "new_uploaders": 545, "new_uploaders_pct": 81 },
+    { "year": 2016, "countries": 45, "uploads": 6177, "images_used": 1403, "images_used_pct": 22, "uploaders": 795, "new_uploaders": 649, "new_uploaders_pct": 81 },
+    { "year": 2017, "countries": 52, "uploads": 15968, "images_used": 2500, "images_used_pct": 15, "uploaders": 2503, "new_uploaders": 2222, "new_uploaders_pct": 88 },
+    { "year": 2019, "countries": 49, "uploads": 8590, "images_used": 1584, "images_used_pct": 18, "uploaders": 1295, "new_uploaders": 1110, "new_uploaders_pct": 85 },
+    { "year": 2020, "countries": 50, "uploads": 15863, "images_used": 3705, "images_used_pct": 23, "uploaders": 1810, "new_uploaders": 1376, "new_uploaders_pct": 76 },
+    { "year": 2021, "countries": 45, "uploads": 7890, "images_used": 1473, "images_used_pct": 18, "uploaders": 1077, "new_uploaders": 822, "new_uploaders_pct": 76 },
+    { "year": 2022, "countries": 49, "uploads": 15479, "images_used": 1414, "images_used_pct": 9, "uploaders": 1133, "new_uploaders": 830, "new_uploaders_pct": 73 },
+    { "year": 2023, "countries": 43, "uploads": 12315, "images_used": 782, "images_used_pct": 6, "uploaders": 768, "new_uploaders": 438, "new_uploaders_pct": 57 },
+    { "year": 2024, "countries": 44, "uploads": 13400, "images_used": 486, "images_used_pct": 3, "uploaders": 755, "new_uploaders": 377, "new_uploaders_pct": 49 },
+    { "year": 2025, "countries": 38, "uploads": 23088, "images_used": 982, "images_used_pct": 4, "uploaders": 748, "new_uploaders": 309, "new_uploaders_pct": 41 }
+  ]
+}

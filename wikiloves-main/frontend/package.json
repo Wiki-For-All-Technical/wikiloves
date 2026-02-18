@@ -1,0 +1,11 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "dependencies": { "axios": "^1.13.2" },
+  "scripts": {
+    "dev": "cd Wikiproject && npm run dev",
+    "build": "cd Wikiproject && npm run build",
+    "preview": "cd Wikiproject && npm run preview"
+  },
+  "devDependencies": { "vite": "^7.2.4" }
+}

@@ -1,0 +1,24 @@
+{
+  "campaign_name": "Wiki Loves Monuments",
+  "slug": "monuments",
+  "source": "static",
+  "updated": "2025-02-18",
+  "years": [
+    { "year": 2010, "countries": 1, "uploads": 11979, "images_used": 7750, "images_used_pct": 64, "uploaders": 199, "new_uploaders": 141, "new_uploaders_pct": 70 },
+    { "year": 2011, "countries": 18, "uploads": 155859, "images_used": 68769, "images_used_pct": 44, "uploaders": 5484, "new_uploaders": 4118, "new_uploaders_pct": 75 },
+    { "year": 2012, "countries": 34, "uploads": 350110, "images_used": 136821, "images_used_pct": 39, "uploaders": 15119, "new_uploaders": 12231, "new_uploaders_pct": 80 },
+    { "year": 2013, "countries": 53, "uploads": 359102, "images_used": 129027, "images_used_pct": 35, "uploaders": 12187, "new_uploaders": 9400, "new_uploaders_pct": 77 },
+    { "year": 2014, "countries": 41, "uploads": 302918, "images_used": 99949, "images_used_pct": 32, "uploaders": 9163, "new_uploaders": 6971, "new_uploaders_pct": 76 },
+    { "year": 2015, "countries": 33, "uploads": 223591, "images_used": 76315, "images_used_pct": 34, "uploaders": 6719, "new_uploaders": 4782, "new_uploaders_pct": 71 },
+    { "year": 2016, "countries": 42, "uploads": 271101, "images_used": 78902, "images_used_pct": 29, "uploaders": 10773, "new_uploaders": 8348, "new_uploaders_pct": 77 },
+    { "year": 2017, "countries": 52, "uploads": 243285, "images_used": 74389, "images_used_pct": 30, "uploaders": 9880, "new_uploaders": 7309, "new_uploaders_pct": 73 },
+    { "year": 2018, "countries": 56, "uploads": 255152, "images_used": 64959, "images_used_pct": 25, "uploaders": 13815, "new_uploaders": 10959, "new_uploaders_pct": 79 },
+    { "year": 2019, "countries": 48, "uploads": 210414, "images_used": 59958, "images_used_pct": 28, "uploaders": 7187, "new_uploaders": 4688, "new_uploaders_pct": 65 },
+    { "year": 2020, "countries": 51, "uploads": 227640, "images_used": 57827, "images_used_pct": 25, "uploaders": 7571, "new_uploaders": 5103, "new_uploaders_pct": 67 },
+    { "year": 2021, "countries": 37, "uploads": 172164, "images_used": 31429, "images_used_pct": 18, "uploaders": 4888, "new_uploaders": 3148, "new_uploaders_pct": 64 },
+    { "year": 2022, "countries": 39, "uploads": 151927, "images_used": 26606, "images_used_pct": 17, "uploaders": 3693, "new_uploaders": 2145, "new_uploaders_pct": 58 },
+    { "year": 2023, "countries": 46, "uploads": 217347, "images_used": 31121, "images_used_pct": 14, "uploaders": 4693, "new_uploaders": 2752, "new_uploaders_pct": 58 },
+    { "year": 2024, "countries": 56, "uploads": 238678, "images_used": 29657, "images_used_pct": 12, "uploaders": 4512, "new_uploaders": 2531, "new_uploaders_pct": 56 },
+    { "year": 2025, "countries": 56, "uploads": 231309, "images_used": 26456, "images_used_pct": 11, "uploaders": 3793, "new_uploaders": 1910, "new_uploaders_pct": 50 }
+  ]
+}

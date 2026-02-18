@@ -1,0 +1,90 @@
+[
+  {
+    "year": 2025,
+    "countries": 54,
+    "uploads": 75890,
+    "uploaders": 2150,
+    "images_used": 12850,
+    "new_uploaders": 1612
+  },
+  {
+    "year": 2024,
+    "countries": 52,
+    "uploads": 68542,
+    "uploaders": 1985,
+    "images_used": 11652,
+    "new_uploaders": 1489
+  },
+  {
+    "year": 2023,
+    "countries": 51,
+    "uploads": 62340,
+    "uploaders": 1820,
+    "images_used": 10598,
+    "new_uploaders": 1365
+  },
+  {
+    "year": 2022,
+    "countries": 53,
+    "uploads": 58725,
+    "uploaders": 2450,
+    "images_used": 9983,
+    "new_uploaders": 1838
+  },
+  {
+    "year": 2021,
+    "countries": 50,
+    "uploads": 45280,
+    "uploaders": 2890,
+    "images_used": 7698,
+    "new_uploaders": 2168
+  },
+  {
+    "year": 2020,
+    "countries": 55,
+    "uploads": 72450,
+    "uploaders": 4250,
+    "images_used": 12317,
+    "new_uploaders": 3188
+  },
+  {
+    "year": 2019,
+    "countries": 52,
+    "uploads": 48920,
+    "uploaders": 3450,
+    "images_used": 8316,
+    "new_uploaders": 2588
+  },
+  {
+    "year": 2017,
+    "countries": 56,
+    "uploads": 82540,
+    "uploaders": 5680,
+    "images_used": 14032,
+    "new_uploaders": 4260
+  },
+  {
+    "year": 2016,
+    "countries": 50,
+    "uploads": 42680,
+    "uploaders": 2450,
+    "images_used": 7256,
+    "new_uploaders": 1838
+  },
+  {
+    "year": 2015,
+    "countries": 49,
+    "uploads": 38950,
+    "uploaders": 2180,
+    "images_used": 6622,
+    "new_uploaders": 1635
+  },
+  {
+    "year": 2014,
+    "countries": 48,
+    "uploads": 35720,
+    "uploaders": 3250,
+    "images_used": 6072,
+    "new_uploaders": 2438
+  }
+]

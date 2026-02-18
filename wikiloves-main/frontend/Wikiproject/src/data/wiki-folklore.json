@@ -1,0 +1,14 @@
+{
+  "campaign_name": "Wiki Loves Folklore",
+  "slug": "folklore",
+  "source": "static",
+  "updated": "2025-02-18",
+  "years": [
+    { "year": 2021, "countries": 20, "uploads": 5332, "images_used": 582, "images_used_pct": 10, "uploaders": 229, "new_uploaders": 110, "new_uploaders_pct": 48 },
+    { "year": 2022, "countries": 23, "uploads": 6635, "images_used": 550, "images_used_pct": 8, "uploaders": 338, "new_uploaders": 161, "new_uploaders_pct": 47 },
+    { "year": 2023, "countries": 24, "uploads": 18103, "images_used": 805, "images_used_pct": 4, "uploaders": 1186, "new_uploaders": 829, "new_uploaders_pct": 69 },
+    { "year": 2024, "countries": 132, "uploads": 32590, "images_used": 1897, "images_used_pct": 5, "uploaders": 1803, "new_uploaders": 1139, "new_uploaders_pct": 63 },
+    { "year": 2025, "countries": 131, "uploads": 72240, "images_used": 1960, "images_used_pct": 2, "uploaders": 1775, "new_uploaders": 963, "new_uploaders_pct": 54 },
+    { "year": 2026, "countries": 96, "uploads": 17100, "images_used": 185, "images_used_pct": 1, "uploaders": 588, "new_uploaders": 245, "new_uploaders_pct": 41 }
+  ]
+}

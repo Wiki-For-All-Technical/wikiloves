@@ -1,0 +1,11 @@
+{
+  "campaign_name": "Wiki Loves Food",
+  "slug": "food",
+  "source": "static",
+  "updated": "2025-02-18",
+  "years": [
+    { "year": 2021, "countries": 1, "uploads": 3443, "images_used": 300, "images_used_pct": 8, "uploaders": 700, "new_uploaders": 577, "new_uploaders_pct": 82 },
+    { "year": 2022, "countries": 2, "uploads": 782, "images_used": 158, "images_used_pct": 20, "uploaders": 131, "new_uploaders": 67, "new_uploaders_pct": 51 },
+    { "year": 2023, "countries": 1, "uploads": 201, "images_used": 43, "images_used_pct": 21, "uploaders": 31, "new_uploaders": 15, "new_uploaders_pct": 48 }
+  ]
+}

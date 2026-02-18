@@ -1,0 +1,98 @@
+{
+  "campaign_name": "Wiki Science Competition",
+  "slug": "science",
+  "source": "static",
+  "updated": "2025-02-18",
+  "years": [
+    {
+      "year": 2011,
+      "countries": 1,
+      "uploads": 215,
+      "images_used": 212,
+      "images_used_pct": 98,
+      "uploaders": 32,
+      "new_uploaders": 29,
+      "new_uploaders_pct": 90
+    },
+    {
+      "year": 2012,
+      "countries": 1,
+      "uploads": 232,
+      "images_used": 132,
+      "images_used_pct": 56,
+      "uploaders": 41,
+      "new_uploaders": 29,
+      "new_uploaders_pct": 70
+    },
+    {
+      "year": 2013,
+      "countries": 1,
+      "uploads": 127,
+      "images_used": 68,
+      "images_used_pct": 53,
+      "uploaders": 30,
+      "new_uploaders": 18,
+      "new_uploaders_pct": 60
+    },
+    {
+      "year": 2015,
+      "countries": 39,
+      "uploads": 9022,
+      "images_used": 1915,
+      "images_used_pct": 21,
+      "uploaders": 2039,
+      "new_uploaders": 1825,
+      "new_uploaders_pct": 89
+    },
+    {
+      "year": 2017,
+      "countries": 41,
+      "uploads": 9421,
+      "images_used": 1555,
+      "images_used_pct": 16,
+      "uploaders": 1894,
+      "new_uploaders": 1589,
+      "new_uploaders_pct": 83
+    },
+    {
+      "year": 2019,
+      "countries": 16,
+      "uploads": 4351,
+      "images_used": 891,
+      "images_used_pct": 20,
+      "uploaders": 882,
+      "new_uploaders": 688,
+      "new_uploaders_pct": 78
+    },
+    {
+      "year": 2021,
+      "countries": 13,
+      "uploads": 1552,
+      "images_used": 364,
+      "images_used_pct": 23,
+      "uploaders": 291,
+      "new_uploaders": 198,
+      "new_uploaders_pct": 68
+    },
+    {
+      "year": 2023,
+      "countries": 13,
+      "uploads": 4243,
+      "images_used": 547,
+      "images_used_pct": 12,
+      "uploaders": 585,
+      "new_uploaders": 390,
+      "new_uploaders_pct": 66
+    },
+    {
+      "year": 2024,
+      "countries": 1,
+      "uploads": 459,
+      "images_used": 37,
+      "images_used_pct": 8,
+      "uploaders": 72,
+      "new_uploaders": 32,
+      "new_uploaders_pct": 44
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+ENV/
+env/
+*.db
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dist/
+.cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Project specific
+*.db-journal
+
+# Temporary data files (raw quarry exports, debug files)
+# Exclude raw quarry exports but keep converted files
+wiki_loves_campaign_data/*.json
+!wiki_loves_campaign_data/earth_complete_with_countries.json
+quarry_data/*multiyear.json
+quarry_data/*new_uploaders*.json
+!quarry_data/*_converted.json
+!quarry_data/MANUAL_DATA_TEMPLATE.json
+quarry_data/*_discrepancies*.txt
+quarry_data/*_summary.txt
+

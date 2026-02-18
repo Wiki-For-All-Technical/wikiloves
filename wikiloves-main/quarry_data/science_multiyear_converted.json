@@ -1,0 +1,44 @@
+[
+  {
+    "year": 2025,
+    "uploads": 3,
+    "uploaders": 1,
+    "images_used": 3,
+    "new_uploaders": 0
+  },
+  {
+    "year": 2024,
+    "uploads": 1,
+    "uploaders": 1,
+    "images_used": 1,
+    "new_uploaders": 0
+  },
+  {
+    "year": 2021,
+    "uploads": 5,
+    "uploaders": 1,
+    "images_used": 5,
+    "new_uploaders": 0
+  },
+  {
+    "year": 2019,
+    "uploads": 1,
+    "uploaders": 1,
+    "images_used": 1,
+    "new_uploaders": 0
+  },
+  {
+    "year": 2018,
+    "uploads": 2,
+    "uploaders": 2,
+    "images_used": 2,
+    "new_uploaders": 1
+  },
+  {
+    "year": 2017,
+    "uploads": 5,
+    "uploaders": 3,
+    "images_used": 5,
+    "new_uploaders": 0
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "campaign_name": "Wiki Loves Public Art",
+  "slug": "public_art",
+  "source": "static",
+  "updated": "2025-02-18",
+  "years": [
+    { "year": 2013, "countries": 5, "uploads": 9158, "images_used": 2073, "images_used_pct": 22, "uploaders": 219, "new_uploaders": 129, "new_uploaders_pct": 58 }
+  ]
+}
