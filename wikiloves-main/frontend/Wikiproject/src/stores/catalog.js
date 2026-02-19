@@ -23,6 +23,8 @@ export const useCatalogStore = defineStore('catalog', {
     competitionDetail: null,
     countries: [],
     countryDetail: null,
+    /** In-memory cache for Toolforge campaign data by slug; avoids refetch on revisit */
+    campaignDataCache: {},
     loading: {
       overview: false,
       competitions: false,
@@ -34,6 +36,9 @@ export const useCatalogStore = defineStore('catalog', {
     error: null,
     _navigationPromise: null,
   }),
+  getters: {
+    getCachedCampaignData: (state) => (slug) => state.campaignDataCache[slug] ?? null,
+  },
   actions: {
     async bootstrapHome() {
       await Promise.all([
@@ -147,6 +152,9 @@ export const useCatalogStore = defineStore('catalog', {
     resolveSegment(segment) {
       if (!segment) return null
       return this.segmentLookup[segment] ?? null
+    },
+    setCampaignDataCache(slug, data) {
+      if (slug && data) this.campaignDataCache[slug] = data
     },
     async loadComparison(year = null) {
       try {

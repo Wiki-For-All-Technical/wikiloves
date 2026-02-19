@@ -2,23 +2,28 @@
 import { ref, computed, watchEffect } from 'vue'
 import { getCampaignData } from '@/data/campaigns'
 import { fetchToolforgeCampaignData } from '@/services/api'
+import { useCatalogStore } from '@/stores/catalog'
 
 const props = defineProps({
   slug: { type: String, required: true },
 })
 
+const catalog = useCatalogStore()
 const apiData = ref(null)
-const loading = ref(true)
+const loading = ref(false)
 
 watchEffect(async () => {
-  loading.value = true
-  apiData.value = null
+  const slug = props.slug
+  const cached = catalog.getCachedCampaignData(slug)
+  const staticData = getCampaignData(slug)
+  apiData.value = cached ?? null
+  loading.value = false
   try {
-    apiData.value = await fetchToolforgeCampaignData(props.slug)
+    const data = await fetchToolforgeCampaignData(slug)
+    apiData.value = data
+    catalog.setCampaignDataCache(slug, data)
   } catch (_) {
-    // Toolforge API unavailable; will fall back to static JSON
-  } finally {
-    loading.value = false
+    if (!cached && !staticData) loading.value = false
   }
 })
 

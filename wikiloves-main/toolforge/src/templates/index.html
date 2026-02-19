@@ -22,9 +22,7 @@
       --radius-sm: 8px;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -36,13 +34,13 @@
     }
 
     .page {
-      max-width: 720px;
+      max-width: 900px;
       margin: 0 auto;
-      padding: 3rem 1.5rem 4rem;
+      padding: 2rem 1.5rem 4rem;
     }
 
     header {
-      margin-bottom: 2.5rem;
+      margin-bottom: 2rem;
     }
 
     h1 {
@@ -56,7 +54,6 @@
     .subtitle {
       color: var(--text-muted);
       font-size: 1rem;
-      font-weight: 400;
       margin: 0;
     }
 
@@ -64,7 +61,7 @@
       display: flex;
       align-items: center;
       gap: 1rem;
-      margin-top: 1.5rem;
+      margin-top: 1rem;
       flex-wrap: wrap;
     }
 
@@ -97,14 +94,9 @@
       50% { opacity: 0.5; }
     }
 
-    .version {
-      color: var(--text-muted);
-      font-size: 0.875rem;
-    }
+    .version { color: var(--text-muted); font-size: 0.875rem; }
 
-    section {
-      margin-top: 2rem;
-    }
+    section { margin-top: 2.5rem; }
 
     .section-title {
       font-size: 0.8125rem;
@@ -115,6 +107,83 @@
       margin: 0 0 1rem;
     }
 
+    /* Campaign cards */
+    .campaigns-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+
+    .campaign-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .campaign-card:hover {
+      background: var(--surface-hover);
+      border-color: var(--accent);
+    }
+
+    .campaign-card h3 {
+      margin: 0 0 0.35rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .campaign-card .campaign-desc {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin: 0 0 1rem;
+      line-height: 1.45;
+    }
+
+    .campaign-card .campaign-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .campaign-card a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.4rem 0.75rem;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-radius: var(--radius-sm);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .campaign-card a:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .campaign-card .no-data {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    .campaigns-loading, .campaigns-error {
+      padding: 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+    }
+
+    .campaigns-error { color: #f85149; }
+
+    /* Endpoints */
     .endpoints {
       display: flex;
       flex-direction: column;
@@ -147,10 +216,7 @@
       color: var(--accent);
     }
 
-    .endpoint-label {
-      color: var(--text-muted);
-      font-size: 0.8125rem;
-    }
+    .endpoint-label { color: var(--text-muted); font-size: 0.8125rem; }
 
     .footer {
       margin-top: 3rem;
@@ -160,13 +226,22 @@
       color: var(--text-muted);
     }
 
-    .footer a {
-      color: var(--accent);
-      text-decoration: none;
+    .footer a { color: var(--accent); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    .fetch-btn {
+      padding: 0.5rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font: inherit;
+      cursor: pointer;
     }
 
-    .footer a:hover {
-      text-decoration: underline;
+    .fetch-btn:hover {
+      background: var(--surface-hover);
+      border-color: var(--accent);
     }
   </style>
 </head>
@@ -182,10 +257,19 @@
     </header>
 
     <section>
-      <h2 class="section-title">Statistics (year list, countries, uploads, uploaders)</h2>
+      <h2 class="section-title">Campaigns with data</h2>
+      <div id="campaigns-container">
+        <div class="campaigns-loading" id="campaigns-loading">Loading campaigns…</div>
+        <div class="campaigns-grid" id="campaigns-grid" style="display: none;"></div>
+        <div class="campaigns-error" id="campaigns-error" style="display: none;"></div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">Statistics API</h2>
       <div class="endpoints">
         <a href="/api/data" class="endpoint">
-          <span class="endpoint-label">Campaigns with data</span>
+          <span class="endpoint-label">List campaigns (JSON)</span>
           <span class="endpoint-path">/api/data</span>
         </a>
         <a href="/api/data/monuments" class="endpoint">
@@ -193,13 +277,14 @@
           <span class="endpoint-path">/api/data/&lt;campaign_slug&gt;</span>
         </a>
         <a href="/api/data/monuments/summary" class="endpoint">
-          <span class="endpoint-label">Summary table (e.g. monuments)</span>
+          <span class="endpoint-label">Summary table</span>
           <span class="endpoint-path">/api/data/&lt;campaign_slug&gt;/summary</span>
         </a>
       </div>
     </section>
+
     <section>
-      <h2 class="section-title">API Endpoints</h2>
+      <h2 class="section-title">Service</h2>
       <div class="endpoints">
         <a href="/api/health" class="endpoint">
           <span class="endpoint-label">Health check</span>
@@ -210,7 +295,7 @@
           <span class="endpoint-path">/api/status</span>
         </a>
         <a href="/api/campaigns" class="endpoint">
-          <span class="endpoint-label">List campaigns</span>
+          <span class="endpoint-label">Campaign metadata (JSON)</span>
           <span class="endpoint-path">/api/campaigns</span>
         </a>
         <a href="/api/logs" class="endpoint">
@@ -219,52 +304,126 @@
         </a>
       </div>
     </section>
+
     <section>
       <h2 class="section-title">Trigger data fetch (POST)</h2>
-      <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0 0 1rem;">Use these to start fetching statistics from the database. Full refresh can take 15–30+ minutes. Check <a href="/api/status" style="color: var(--accent);">/api/status</a> for progress.</p>
+      <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0 0 1rem;">Start fetching from the database. Full refresh can take 15–30+ minutes. Check <a href="/api/status" style="color: var(--accent);">/api/status</a> for progress.</p>
       <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-        <button type="button" class="fetch-btn" data-url="/api/fetch/all">Fetch all campaigns</button>
-        <button type="button" class="fetch-btn" data-url="/api/fetch/monuments">Fetch monuments</button>
-        <button type="button" class="fetch-btn" data-url="/api/fetch/earth">Fetch earth</button>
-        <button type="button" class="fetch-btn" data-url="/api/fetch/folklore">Fetch folklore</button>
+        <button type="button" class="fetch-btn" data-url="/api/fetch/all">Fetch all</button>
+        <button type="button" class="fetch-btn" data-url="/api/fetch/earth">Earth</button>
+        <button type="button" class="fetch-btn" data-url="/api/fetch/monuments">Monuments</button>
+        <button type="button" class="fetch-btn" data-url="/api/fetch/folklore">Folklore</button>
+        <button type="button" class="fetch-btn" data-url="/api/fetch/science">Science</button>
+        <button type="button" class="fetch-btn" data-url="/api/fetch/africa">Africa</button>
+        <button type="button" class="fetch-btn" data-url="/api/fetch/food">Food</button>
+        <button type="button" class="fetch-btn" data-url="/api/fetch/public_art">Public Art</button>
       </div>
       <p id="fetch-result" style="font-size: 0.875rem; margin: 0.75rem 0 0; min-height: 1.5em;"></p>
-      <style>
-        .fetch-btn {
-          padding: 0.5rem 1rem;
-          background: var(--surface);
-          border: 1px solid var(--border);
-          border-radius: var(--radius-sm);
-          color: var(--text);
-          font: inherit;
-          cursor: pointer;
-        }
-        .fetch-btn:hover { background: var(--surface-hover); border-color: var(--accent); }
-      </style>
-      <script>
-        document.querySelectorAll('.fetch-btn').forEach(function(btn) {
-          btn.addEventListener('click', function() {
-            var url = this.getAttribute('data-url');
-            var resultEl = document.getElementById('fetch-result');
-            resultEl.textContent = 'Sending…';
-            fetch(url, { method: 'POST' })
-              .then(function(r) { return r.json().then(function(j) { return { status: r.status, body: j }; }); })
-              .then(function(o) {
-                if (o.status === 202) resultEl.textContent = 'Started. Check /api/status for progress.';
-                else if (o.status === 409) resultEl.textContent = 'Already running: ' + (o.body.current_task || 'another task');
-                else resultEl.textContent = 'Error ' + o.status + ': ' + (o.body.error || o.body.message || JSON.stringify(o.body));
-              })
-              .catch(function(e) { document.getElementById('fetch-result').textContent = 'Error: ' + e.message; });
-          });
-        });
-      </script>
     </section>
 
     <footer class="footer">
       <a href="/api/health">Health</a> ·
+      <a href="/api/data">Data</a> ·
       <a href="/api/campaigns">Campaigns</a> ·
       <a href="https://toolforge.org/" target="_blank" rel="noopener">Toolforge</a>
     </footer>
   </div>
+
+  <script>
+    (function() {
+      var DESCRIPTIONS = {
+        earth: 'Natural heritage and protected areas worldwide.',
+        monuments: 'Cultural heritage and historic monuments.',
+        folklore: 'Intangible cultural heritage and traditions.',
+        science: 'Scientific images and illustrations.',
+        africa: 'African culture, nature, and heritage.',
+        food: 'Food culture and culinary traditions.',
+        public_art: 'Public art and sculptures.'
+      };
+
+      function slugToDesc(slug) {
+        return DESCRIPTIONS[slug] || 'Campaign statistics from Wikimedia Commons.';
+      }
+
+      var gridEl = document.getElementById('campaigns-grid');
+      var loadingEl = document.getElementById('campaigns-loading');
+      var errorEl = document.getElementById('campaigns-error');
+
+      function showError(msg) {
+        loadingEl.style.display = 'none';
+        gridEl.style.display = 'none';
+        errorEl.textContent = msg;
+        errorEl.style.display = 'block';
+      }
+
+      function renderCampaigns(campaignsWithNames, slugsWithData) {
+        var dataSet = new Set((slugsWithData && slugsWithData.campaigns) ? slugsWithData.campaigns.map(function(c) { return c.slug; }) : []);
+        var campaigns = campaignsWithNames && campaignsWithNames.campaigns ? campaignsWithNames.campaigns : [];
+        if (campaigns.length === 0) {
+          var slugs = Array.from(dataSet);
+          if (slugs.length > 0) {
+            campaigns = slugs.map(function(s) { return { slug: s, name: s.replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); }), path_segment: s }; });
+          }
+        }
+
+        loadingEl.style.display = 'none';
+        if (campaigns.length === 0) {
+          errorEl.textContent = 'No campaigns found. Trigger a fetch or check /api/data and /api/campaigns.';
+          errorEl.style.display = 'block';
+          return;
+        }
+        errorEl.style.display = 'none';
+
+        gridEl.innerHTML = campaigns.map(function(c) {
+          var seg = c.path_segment || c.slug;
+          var hasData = dataSet.has(seg);
+          var name = c.name || seg;
+          var desc = slugToDesc(seg);
+          var links = hasData
+            ? '<a href="/api/data/' + encodeURIComponent(seg) + '">View data (JSON) &rarr;</a>'
+            : '<span class="no-data">No processed data yet</span>';
+          return (
+            '<div class="campaign-card">' +
+              '<h3>' + escapeHtml(name) + '</h3>' +
+              '<p class="campaign-desc">' + escapeHtml(desc) + '</p>' +
+              '<div class="campaign-actions">' + links + '</div>' +
+            '</div>'
+          );
+        }).join('');
+        gridEl.style.display = 'grid';
+      }
+
+      function escapeHtml(s) {
+        var div = document.createElement('div');
+        div.textContent = s;
+        return div.innerHTML;
+      }
+
+      Promise.all([
+        fetch('/api/campaigns').then(function(r) { return r.ok ? r.json() : {}; }).catch(function() { return {}; }),
+        fetch('/api/data').then(function(r) { return r.ok ? r.json() : { campaigns: [] }; }).catch(function() { return { campaigns: [] }; })
+      ]).then(function(results) {
+        renderCampaigns(results[0], results[1]);
+      }).catch(function(e) {
+        showError('Failed to load campaigns: ' + e.message);
+      });
+    })();
+
+    document.querySelectorAll('.fetch-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var url = this.getAttribute('data-url');
+        var resultEl = document.getElementById('fetch-result');
+        resultEl.textContent = 'Sending…';
+        fetch(url, { method: 'POST' })
+          .then(function(r) { return r.json().then(function(j) { return { status: r.status, body: j }; }); })
+          .then(function(o) {
+            if (o.status === 202) resultEl.textContent = 'Started. Check /api/status for progress.';
+            else if (o.status === 409) resultEl.textContent = 'Already running: ' + (o.body.current_task || 'another task');
+            else resultEl.textContent = 'Error ' + o.status + ': ' + (o.body.error || o.body.message || JSON.stringify(o.body));
+          })
+          .catch(function(e) { document.getElementById('fetch-result').textContent = 'Error: ' + e.message; });
+      });
+    });
+  </script>
 </body>
 </html>
