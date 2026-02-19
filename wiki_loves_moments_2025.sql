@@ -41,7 +41,7 @@ SELECT
 FROM categorylinks cl
 JOIN page p ON cl.cl_from = p.page_id AND p.page_namespace = 6 AND p.page_is_redirect = 0
 JOIN image i ON i.img_name = p.page_title
-LEFT JOIN imagelinks il ON il.il_to = p.page_id
+LEFT JOIN imagelinks il ON il.il_to = p.page_title
 WHERE cl.cl_type = 'file'
   AND cl.cl_to LIKE 'Images_from_Wiki_Loves_Monuments_2025_in_%'
 GROUP BY cl.cl_to;

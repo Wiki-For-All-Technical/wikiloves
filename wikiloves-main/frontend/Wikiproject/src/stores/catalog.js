@@ -8,7 +8,11 @@ import {
   fetchOverview,
   fetchComparison,
   fetchTrends,
+  fetchToolforgeCountryDetail,
+  fetchToolforgeCampaignData,
+  fetchToolforgeCampaigns,
 } from '@/services/api'
+import { getCampaignData } from '@/data/campaigns'
 
 export const useCatalogStore = defineStore('catalog', {
   state: () => ({
@@ -28,6 +32,7 @@ export const useCatalogStore = defineStore('catalog', {
       countryDetail: false,
     },
     error: null,
+    _navigationPromise: null,
   }),
   actions: {
     async bootstrapHome() {
@@ -39,24 +44,51 @@ export const useCatalogStore = defineStore('catalog', {
       ])
     },
     async loadNavigation() {
-      if (this.loading.navigation) return
+      if (this._navigationPromise) return this._navigationPromise
+      const staticNav = [
+        { type: 'competition', path_segment: 'earth', slug: 'earth' },
+        { type: 'competition', path_segment: 'monuments', slug: 'monuments' },
+        { type: 'competition', path_segment: 'folklore', slug: 'folklore' },
+        { type: 'competition', path_segment: 'africa', slug: 'africa' },
+        { type: 'competition', path_segment: 'food', slug: 'food' },
+        { type: 'competition', path_segment: 'public_art', slug: 'public_art' },
+        { type: 'competition', path_segment: 'science', slug: 'science' },
+      ]
+      const staticLookup = { earth: 'earth', monuments: 'monuments', folklore: 'folklore', africa: 'africa', food: 'food', public_art: 'public_art', science: 'science' }
       this.loading.navigation = true
       this.error = null
-      try {
-        const nav = await fetchNavigation()
-        this.navigation = nav
-        this.segmentLookup = nav.reduce((acc, entry) => {
-          if (entry.type === 'competition') {
-            acc[entry.path_segment] = entry.slug
-          }
-          return acc
-        }, {})
-      } catch (error) {
-        console.error('Error loading navigation:', error)
-        this.error = error.response?.data || error.message || error
-      } finally {
-        this.loading.navigation = false
-      }
+      this._navigationPromise = (async () => {
+        try {
+          let nav = []
+          try {
+            const campaigns = await fetchToolforgeCampaigns()
+            if (campaigns?.campaigns?.length) {
+              nav = campaigns.campaigns.map((c) => ({
+                type: 'competition',
+                label: c.name,
+                slug: c.slug,
+                path_segment: c.path_segment || c.slug,
+              }))
+            }
+          } catch (_) {}
+          if (!nav.length) nav = staticNav
+          this.navigation = nav
+          this.segmentLookup = nav.reduce((acc, entry) => {
+            if (entry.type === 'competition' && entry.path_segment) {
+              acc[entry.path_segment] = entry.path_segment
+            }
+            return acc
+          }, {})
+        } catch (error) {
+          console.error('Error loading navigation:', error)
+          this.navigation = staticNav
+          this.segmentLookup = staticLookup
+        } finally {
+          this.loading.navigation = false
+          this._navigationPromise = null
+        }
+      })()
+      return this._navigationPromise
     },
     async loadOverview() {
       this.loading.overview = true
@@ -136,42 +168,56 @@ export const useCatalogStore = defineStore('catalog', {
     },
     async loadCampaignCountryDetail(campaignSlug, year, country) {
       try {
-        // Fetch from Toolforge API
-        const response = await fetch(
-          `https://wikiloves-data.toolforge.org/api/data/${campaignSlug}`
-        )
-        if (!response.ok) {
-          throw new Error(`Failed to load campaign data: ${response.statusText}`)
-        }
-        const data = await response.json()
-        
-        // Find the year and country in the Toolforge data structure
-        const yearData = data.years?.find(y => y.year === year)
-        if (!yearData) {
-          throw new Error(`No data found for year ${year}`)
-        }
-        
-        // Find country data
-        const countryData = yearData.countries?.find(c => 
-          c.country.toLowerCase().replace(/\s+/g, '_') === country.toLowerCase().replace(/\s+/g, '_') ||
-          c.country.toLowerCase() === country.toLowerCase()
-        )
-        
-        if (!countryData) {
-          throw new Error(`No data found for country ${country}`)
-        }
-        
-        // Transform Toolforge data structure to match expected format
-        return {
-          campaign: data.campaign_name || campaignSlug,
-          year: year,
-          country: countryData.country,
-          category_name: `Images_from_${data.campaign_name?.replace(/\s+/g, '_')}_${year}_in_${countryData.country.replace(/\s+/g, '_')}`,
-          total_uploads: countryData.uploads || 0,
-          total_uploaders: countryData.uploaders || 0,
-          total_images_used: countryData.images_used || 0,
-          total_new_uploaders: countryData.new_uploaders || 0,
-          daily_stats: countryData.daily_stats || []
+        // Prefer on-demand SQL via Toolforge: GET /api/data/<slug>/<year>/<country>
+        try {
+          const data = await fetchToolforgeCountryDetail(campaignSlug, year, country)
+          return data
+        } catch (onDemandErr) {
+          try {
+            const data = await fetchToolforgeCampaignData(campaignSlug)
+            const yearData = data.years?.find(y => y.year === year)
+            if (!yearData) throw new Error(`No data found for year ${year}`)
+            const countryData = yearData.country_stats?.find(c =>
+              (c.name || c.country || '').toLowerCase().replace(/\s+/g, '_') === country.toLowerCase().replace(/\s+/g, '_') ||
+              (c.name || c.country || '').toLowerCase() === country.toLowerCase()
+            )
+            if (!countryData) throw new Error(`No data found for country ${country}`)
+            const name = countryData.name ?? countryData.country ?? country
+            return {
+              campaign: data.campaign_name || campaignSlug,
+              year: year,
+              country: name,
+              category_name: `Images_from_${(data.campaign_name || campaignSlug).replace(/\s+/g, '_')}_${year}_in_${name.replace(/\s+/g, '_')}`,
+              total_uploads: countryData.uploads ?? 0,
+              total_uploaders: countryData.uploaders ?? 0,
+              total_images_used: countryData.images_used ?? 0,
+              total_new_uploaders: countryData.new_uploaders ?? 0,
+              daily_stats: countryData.daily_stats || []
+            }
+          } catch (apiErr) {
+            const staticData = getCampaignData(campaignSlug)
+            if (!staticData?.years) throw apiErr
+            const yearData = staticData.years.find(y => y.year === year)
+            if (!yearData?.country_rows) throw apiErr
+            const countryData = yearData.country_rows.find(c =>
+              (c.country || '').toLowerCase().replace(/\s+/g, '_') === country.toLowerCase().replace(/\s+/g, '_') ||
+              (c.country || '').toLowerCase() === country.toLowerCase()
+            )
+            if (!countryData) throw apiErr
+            const name = countryData.country || country
+            const campaignName = staticData.campaign_name || campaignSlug
+            return {
+              campaign: campaignName,
+              year: year,
+              country: name,
+              category_name: `Images_from_${campaignName.replace(/\s+/g, '_')}_${year}_in_${name.replace(/\s+/g, '_')}`,
+              total_uploads: countryData.images ?? 0,
+              total_uploaders: countryData.uploaders ?? 0,
+              total_images_used: countryData.images_used ?? 0,
+              total_new_uploaders: countryData.new_uploaders ?? 0,
+              daily_stats: []
+            }
+          }
         }
       } catch (error) {
         console.error('Error loading campaign country detail:', error)

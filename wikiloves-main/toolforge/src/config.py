@@ -38,6 +38,13 @@ class Config:
     # Processing settings
     MAX_QUERY_TIME = 10800  # 3 hours in seconds (for analytics DB)
     MAX_WEB_QUERY_TIME = 300  # 5 minutes for web DB
+
+    # Uploaders cache: serve from file after first successful query (fast subsequent loads)
+    UPLOADERS_CACHE_DIR = DATA_DIR / 'uploaders'
+    UPLOADERS_CACHE_TTL_SEC = 24 * 3600  # 24 hours
+    # Country detail cache: same idea so /api/data/<campaign>/<year>/<country> is instant
+    COUNTRY_DETAIL_CACHE_DIR = DATA_DIR / 'country_detail'
+    COUNTRY_DETAIL_CACHE_TTL_SEC = 24 * 3600  # 24 hours
     
     # Job settings
     DAILY_REFRESH_HOUR = 2  # UTC hour for daily refresh

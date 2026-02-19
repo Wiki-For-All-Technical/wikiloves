@@ -28,6 +28,19 @@ export const fetchToolforgeCampaignQuery = (campaignSlug, year = null) => {
 export const fetchToolforgeCampaigns = () => 
   mapResponse(axios.get(`${TOOLFORGE_API_BASE}/campaigns`))
 
+const TOOLFORGE_COUNTRY_TIMEOUT_MS = 60000
+const TOOLFORGE_UPLOADERS_TIMEOUT_MS = 180000
+
+export const fetchToolforgeCountryDetail = (campaignSlug, year, country) => {
+  const path = `${TOOLFORGE_API_BASE}/data/${campaignSlug}/${year}/${encodeURIComponent(country)}`
+  return mapResponse(axios.get(path, { timeout: TOOLFORGE_COUNTRY_TIMEOUT_MS }))
+}
+
+export const fetchToolforgeCountryUploaders = (campaignSlug, year, country) => {
+  const path = `${TOOLFORGE_API_BASE}/data/${campaignSlug}/${year}/${encodeURIComponent(country)}/uploaders`
+  return mapResponse(axios.get(path, { timeout: TOOLFORGE_UPLOADERS_TIMEOUT_MS }))
+}
+
 // Legacy endpoints (for backward compatibility)
 export const fetchOverview = () => mapResponse(api.get('/overview'))
 export const fetchNavigation = () => mapResponse(api.get('/navigation'))

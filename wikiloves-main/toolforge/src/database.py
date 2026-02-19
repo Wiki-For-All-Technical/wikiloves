@@ -77,14 +77,14 @@ class DatabaseConnection:
         return credentials
     
     @contextmanager
-    def get_connection(self, use_analytics: bool = True, timeout: int = 30):
+    def get_connection(self, use_analytics: bool = True, timeout: int = 60):
         """
         Get a database connection context manager.
         
         Args:
             use_analytics: If True, use analytics DB (for long queries up to 3 hours).
                          If False, use web DB (for quick queries).
-            timeout: Connection timeout in seconds.
+            timeout: Connection timeout in seconds (default 60 for slow Toolforge→DB links).
         
         Yields:
             pymysql.Connection: Database connection object.
@@ -158,7 +158,7 @@ class DatabaseConnection:
         start_time = time.time()
         
         try:
-            with self.get_connection(use_analytics=use_analytics, timeout=30) as conn:
+            with self.get_connection(use_analytics=use_analytics, timeout=60) as conn:
                 with conn.cursor() as cursor:
                     if params:
                         cursor.execute(query, params)

@@ -75,7 +75,9 @@ def api_info():
             "fetch_all": "/api/fetch/all",
             "fetch_campaign": "/api/fetch/<campaign_slug>",
             "fetch_campaign_year": "/api/fetch/<campaign_slug>/<year>",
-            "logs": "/api/logs"
+            "prebuild": "/api/prebuild (POST - warm country + uploaders cache)",
+            "logs": "/api/logs",
+            "test_earth_2025_germany": "/api/test/earth-2025-germany (GET - run Earth 2025 Germany queries)"
         }
     }
 

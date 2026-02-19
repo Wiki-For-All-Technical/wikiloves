@@ -23,8 +23,5 @@ export const useThemeStore = defineStore('theme', {
       }
     },
   },
-  onMounted() {
-    this.applyTheme()
-  },
 })
 

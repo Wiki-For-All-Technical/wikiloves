@@ -1,14 +1,28 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import axios from 'axios'
+import { useCatalogStore } from '@/stores/catalog'
 
 const router = useRouter()
 const route = useRoute()
+const catalog = useCatalogStore()
 
-const navigation = ref([])
 const loading = ref(true)
 const expandedCampaigns = ref(new Set())
+
+const navigation = computed(() => {
+  const nav = catalog.navigation || []
+  const home = { type: 'home', label: 'Main page', slug: 'home', path: '/' }
+  const items = nav.map((n) => ({
+    type: n.type || 'competition',
+    label: n.label || n.slug || n.path_segment,
+    slug: n.slug || n.path_segment,
+    path_segment: n.path_segment || n.slug,
+    path: n.path,
+    years: n.years || [2025],
+  }))
+  return [home, ...items]
+})
 
 const toggleCampaign = (slug) => {
   if (expandedCampaigns.value.has(slug)) {
@@ -24,81 +38,20 @@ const isExpanded = (slug) => {
 
 onMounted(async () => {
   try {
-    // Try to fetch from backend API, fallback to static data
-    try {
-      const response = await axios.get('/api/navigation')
-      navigation.value = response.data
-    } catch (err) {
-       // Fallback: use static navigation (Monuments and Food)
-      navigation.value = [
-        {
-          type: 'home',
-          label: 'Main page',
-          slug: 'home',
-          path: '/'
-        },
-        {
-          type: 'competition',
-          label: 'WL Monuments',
-          slug: 'monuments',
-          path_segment: 'monuments',
-          years: [2025]
-        },
-        {
-          type: 'competition',
-          label: 'WL Food',
-          slug: 'food',
-          path_segment: 'food',
-          years: [2025]
-        },
-        {
-          type: 'link',
-          label: 'WL Science',
-          slug: 'science',
-          path_segment: 'science',
-          path: '/science'
-        }
-      ]
+    if (!catalog.navigation.length) {
+      await catalog.loadNavigation()
     }
-    
-    // If API returned multiple campaigns, keep only Main page, Monuments, Food, and Science
-    if (navigation.value.length > 4) {
-      const home = navigation.value.find(n => n.type === 'home')
-      const monuments = navigation.value.find(n => n.slug === 'monuments' || n.path_segment === 'monuments')
-      const food = navigation.value.find(n => n.slug === 'food' || n.path_segment === 'food')
-      const science = navigation.value.find(n => n.slug === 'science' || n.path_segment === 'science')
-      navigation.value = [
-        home || { type: 'home', label: 'Main page', slug: 'home', path: '/' },
-        monuments || { type: 'competition', label: 'WL Monuments', slug: 'monuments', path_segment: 'monuments', years: [2025] },
-        food || { type: 'competition', label: 'WL Food', slug: 'food', path_segment: 'food', years: [2025] },
-        science || { type: 'link', label: 'WL Science', slug: 'science', path_segment: 'science', path: '/science' }
-      ]
-    }
-    
-    // Ensure campaigns only have 2025
-    const mon = navigation.value.find(n => n.slug === 'monuments' || n.path_segment === 'monuments')
-    if (mon) {
-      mon.years = [2025]
-    }
-    const food = navigation.value.find(n => n.slug === 'food' || n.path_segment === 'food')
-    if (food) {
-      food.years = [2025]
-    }
-    
-    // Auto-expand campaigns (and current campaign if on a campaign page)
     expandedCampaigns.value.add('monuments')
     expandedCampaigns.value.add('food')
-    const currentSegment = route.params.segment
+    expandedCampaigns.value.add('earth')
     if (route.path === '/science') {
       expandedCampaigns.value.add('science')
     }
+    const currentSegment = route.params.segment
     if (currentSegment) {
       expandedCampaigns.value.add(currentSegment)
     }
-    
-    loading.value = false
-  } catch (err) {
-    console.error('Failed to load navigation:', err)
+  } finally {
     loading.value = false
   }
 })

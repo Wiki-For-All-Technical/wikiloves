@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { getCampaignData } from '@/data/campaigns'
 import scienceData from '@/data/wiki-science-competition.json'
+import CountryCumulativeChart from '@/components/CountryCumulativeChart.vue'
 
 const props = defineProps({
   slug: { type: String, required: true },
@@ -84,9 +85,49 @@ const barColor = (index) => barColors[index % barColors.length]
           <p class="year-subtitle">Tool Labs – Tools for Wiki Loves Photo Competitions</p>
         </section>
 
+        <section class="year-stats-section" aria-label="Competition statistics">
+          <h2 class="year-stats-heading">Statistics</h2>
+          <div class="year-stats-grid">
+            <div class="year-stat-card">
+              <span class="year-stat-value">{{ formatNumber(yearData.uploads) }}</span>
+              <span class="year-stat-label">Total images</span>
+            </div>
+            <div class="year-stat-card">
+              <span class="year-stat-value">{{ formatNumber(yearData.images_used) }}</span>
+              <span class="year-stat-label">Images used in wikis</span>
+              <span v-if="yearData.images_used_pct != null" class="year-stat-meta">({{ yearData.images_used_pct }}%)</span>
+            </div>
+            <div class="year-stat-card">
+              <span class="year-stat-value">{{ formatNumber(yearData.countries) }}</span>
+              <span class="year-stat-label">Countries</span>
+            </div>
+            <div class="year-stat-card">
+              <span class="year-stat-value">{{ formatNumber(yearData.uploaders) }}</span>
+              <span class="year-stat-label">Uploaders</span>
+            </div>
+            <div class="year-stat-card">
+              <span class="year-stat-value">{{ formatNumber(yearData.new_uploaders) }}</span>
+              <span class="year-stat-label">New uploaders (after start)</span>
+              <span v-if="yearData.new_uploaders_pct != null" class="year-stat-meta">({{ yearData.new_uploaders_pct }}%)</span>
+            </div>
+          </div>
+        </section>
+
         <section class="year-graph-section">
-          <div class="year-graph-wrap">
-            <svg class="year-graph" viewBox="0 0 400 180" preserveAspectRatio="none" aria-hidden="true">
+          <div class="year-graph-wrap" :class="{ 'year-graph-wrap--country': countryRows?.length }">
+            <CountryCumulativeChart
+              v-if="countryRows?.length"
+              :country-rows="countryRows"
+              :colors="barColors"
+              :height="280"
+            />
+            <svg
+              v-else
+              class="year-graph"
+              viewBox="0 0 400 180"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
               <defs>
                 <linearGradient id="yearGraphGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stop-color="#16a34a" stop-opacity="0.3" />
@@ -137,7 +178,12 @@ const barColor = (index) => barColors[index % barColors.length]
                   </td>
                   <td class="year-td-rank">{{ i + 1 }}</td>
                   <td class="year-td-country">
-                    <span class="year-country-link">{{ row.country }}</span>
+                    <router-link
+                      :to="`/${slug}/${yearNum}/${row.country}`"
+                      class="year-country-link"
+                    >
+                      {{ row.country }}
+                    </router-link>
                   </td>
                   <td class="year-td-num">{{ formatNumber(row.images) }}</td>
                   <td class="year-td-num">
@@ -224,6 +270,51 @@ const barColor = (index) => barColors[index % barColors.length]
   color: #6b7280;
 }
 
+.year-stats-section {
+  margin-bottom: 2rem;
+}
+
+.year-stats-heading {
+  margin: 0 0 1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.year-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.year-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 1.25rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.year-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111;
+  font-variant-numeric: tabular-nums;
+}
+
+.year-stat-label {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  line-height: 1.3;
+}
+
+.year-stat-meta {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
 .year-graph-section {
   margin-bottom: 2rem;
 }
@@ -235,6 +326,12 @@ const barColor = (index) => barColors[index % barColors.length]
   border-radius: 8px;
   border: 1px solid #e5e7eb;
   overflow: hidden;
+}
+
+.year-graph-wrap--country {
+  height: auto;
+  min-height: 280px;
+  overflow: visible;
 }
 
 .year-graph {
