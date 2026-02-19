@@ -1,12 +1,8 @@
 <script setup>
 import { onMounted } from 'vue'
 import { RouterView, RouterLink } from 'vue-router'
-import ThemeToggle from '@/components/ThemeToggle.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
-import { useThemeStore } from '@/stores/theme'
 import { setupKeyboardNavigation } from '@/utils/accessibility'
-
-const themeStore = useThemeStore()
 
 const navLinks = [
   { label: 'Earth', to: '/earth' },
@@ -19,11 +15,7 @@ const navLinks = [
 ]
 
 onMounted(() => {
-  themeStore.applyTheme()
   setupKeyboardNavigation()
-  window.addEventListener('toggleTheme', () => {
-    themeStore.toggleTheme()
-  })
 })
 </script>
 
@@ -44,7 +36,7 @@ onMounted(() => {
           >{{ link.label }}</RouterLink>
         </nav>
         <div class="navbar-actions">
-          <ThemeToggle />
+          <RouterLink to="/about" class="navbar-link navbar-about">About</RouterLink>
         </div>
       </div>
     </header>
@@ -149,6 +141,14 @@ onMounted(() => {
 
 .navbar-actions {
   flex-shrink: 0;
+}
+
+.navbar-about {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
 }
 
 .app-content {

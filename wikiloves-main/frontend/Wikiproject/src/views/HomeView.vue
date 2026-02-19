@@ -26,10 +26,6 @@ const campaigns = [
             for <a href="https://www.wikipedia.org/" target="_blank" rel="noopener">Wikipedia</a> and
             <a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a>.
           </p>
-          <div class="hero-actions">
-            <router-link to="/comparison" class="btn btn-primary">Explore Statistics</router-link>
-            <a href="https://commons.wikimedia.org/wiki/Commons:Wiki_Loves" target="_blank" rel="noopener" class="btn btn-outline">Learn More</a>
-          </div>
         </div>
         <div class="hero-visual">
           <div class="hero-grid-logos">
@@ -118,37 +114,6 @@ const campaigns = [
   color: var(--color-accent);
   font-weight: 500;
 }
-
-.hero-actions {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.625rem 1.5rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.9375rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.15s;
-  border: 2px solid transparent;
-}
-
-.btn-primary {
-  background: var(--color-accent);
-  color: #fff;
-}
-.btn-primary:hover { background: var(--color-accent-hover); text-decoration: none; }
-
-.btn-outline {
-  border-color: var(--border-strong);
-  color: var(--text-primary);
-  background: transparent;
-}
-.btn-outline:hover { border-color: var(--color-accent); color: var(--color-accent); text-decoration: none; }
 
 .hero-visual {
   display: flex;

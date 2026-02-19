@@ -1,12 +1,28 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watchEffect } from 'vue'
 import { getCampaignData } from '@/data/campaigns'
+import { fetchToolforgeCampaignData } from '@/services/api'
 
 const props = defineProps({
   slug: { type: String, required: true },
 })
 
-const campaignData = computed(() => getCampaignData(props.slug))
+const apiData = ref(null)
+const loading = ref(true)
+
+watchEffect(async () => {
+  loading.value = true
+  apiData.value = null
+  try {
+    apiData.value = await fetchToolforgeCampaignData(props.slug)
+  } catch (_) {
+    // Toolforge API unavailable; will fall back to static JSON
+  } finally {
+    loading.value = false
+  }
+})
+
+const campaignData = computed(() => apiData.value || getCampaignData(props.slug))
 
 const chronologicalYears = computed(() => {
   const data = campaignData.value
@@ -95,7 +111,12 @@ function formatAxis(v) {
 
 <template>
   <div class="page">
-    <template v-if="campaignData">
+    <div v-if="loading" class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading campaign data&hellip;</p>
+    </div>
+
+    <template v-else-if="campaignData">
       <div class="page-inner">
         <!-- Breadcrumb -->
         <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -227,7 +248,7 @@ function formatAxis(v) {
               </tbody>
             </table>
           </div>
-          <p class="meta-text">Static data &middot; Updated {{ campaignData.updated }}</p>
+          <p class="meta-text">{{ apiData ? 'Live data from Toolforge' : 'Static data' }}{{ campaignData.updated ? ` · Updated ${campaignData.updated}` : '' }}</p>
         </section>
       </div>
     </template>
@@ -476,6 +497,27 @@ function formatAxis(v) {
   font-size: 0.8125rem;
   color: var(--text-muted);
 }
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  gap: 1rem;
+  color: var(--text-secondary);
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .not-found {
   max-width: 1100px;

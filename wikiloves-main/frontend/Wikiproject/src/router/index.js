@@ -20,9 +20,15 @@ const router = createRouter({
       component: () => import('../views/ComparisonView.vue'),
     },
     {
+      path: '/about',
+      name: 'about',
+      component: () => import('../views/AboutView.vue'),
+    },
+    {
       path: '/science',
       name: 'science',
-      component: () => import('../views/ScienceCampaignView.vue'),
+      component: () => import('../views/CampaignView.vue'),
+      props: { slug: 'science' },
     },
     {
       path: '/folklore',
@@ -61,18 +67,12 @@ const router = createRouter({
       props: { slug: 'monuments' },
     },
     {
-      path: '/science/:year',
-      name: 'science-year',
-      component: () => import('../views/CampaignYearView.vue'),
-      props: (r) => ({ slug: 'science', year: r.params.year }),
-    },
-    {
       path: '/:slug/:year',
       name: 'campaign-year',
       component: () => import('../views/CampaignYearView.vue'),
       props: true,
       beforeEnter: (to, _from, next) => {
-        const campaignSlugs = ['earth', 'folklore', 'africa', 'food', 'public_art', 'monuments']
+        const campaignSlugs = ['earth', 'folklore', 'africa', 'food', 'public_art', 'monuments', 'science']
         if (campaignSlugs.includes(to.params.slug) && /^\d+$/.test(to.params.year)) return next()
         next({ path: '/' })
       },

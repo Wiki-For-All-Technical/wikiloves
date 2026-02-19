@@ -35,7 +35,6 @@ WHERE cl.cl_to LIKE '${pattern}'
   AND cl.cl_to NOT LIKE '%/%'
   AND cl.cl_to NOT LIKE '%_by_%'
   AND cl.cl_to NOT LIKE '%_at_%'
-  AND cl.cl_to NOT REGEXP '[0-9]_in_'
 " > "$outfile"
 
     local rows

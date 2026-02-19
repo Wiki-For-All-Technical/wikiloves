@@ -1,7 +1,7 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, watchEffect } from 'vue'
 import { getCampaignData } from '@/data/campaigns'
-import scienceData from '@/data/wiki-science-competition.json'
+import { fetchToolforgeCampaignData } from '@/services/api'
 import CountryCumulativeChart from '@/components/CountryCumulativeChart.vue'
 
 const props = defineProps({
@@ -11,10 +11,22 @@ const props = defineProps({
 
 const yearNum = computed(() => parseInt(props.year, 10))
 
-const campaignData = computed(() => {
-  if (props.slug === 'science') return scienceData
-  return getCampaignData(props.slug)
+const apiData = ref(null)
+const loading = ref(true)
+
+watchEffect(async () => {
+  loading.value = true
+  apiData.value = null
+  try {
+    apiData.value = await fetchToolforgeCampaignData(props.slug)
+  } catch (_) {
+    // Toolforge unavailable; fall back to static JSON
+  } finally {
+    loading.value = false
+  }
 })
+
+const campaignData = computed(() => apiData.value || getCampaignData(props.slug))
 
 const yearData = computed(() => {
   const data = campaignData.value
@@ -23,7 +35,7 @@ const yearData = computed(() => {
 })
 
 const campaignName = computed(() => campaignData.value?.campaign_name ?? 'Wiki Loves')
-const campaignPath = computed(() => (props.slug === 'science' ? '/science' : `/${props.slug}`))
+const campaignPath = computed(() => `/${props.slug}`)
 
 const countryRows = computed(() => {
   const y = yearData.value
@@ -63,7 +75,12 @@ const barColor = (index) => barColors[index % barColors.length]
 
 <template>
   <div class="page">
-    <template v-if="yearData">
+    <div v-if="loading" class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading year data&hellip;</p>
+    </div>
+
+    <template v-else-if="yearData">
       <div class="page-inner">
         <!-- Breadcrumb -->
         <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -350,6 +367,27 @@ const barColor = (index) => barColors[index % barColors.length]
 .country-link:hover { text-decoration: underline; }
 .td-num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 .pct { color: var(--text-muted); font-weight: 400; margin-left: 0.25rem; }
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  gap: 1rem;
+  color: var(--text-secondary);
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .not-found {
   max-width: 1100px;
