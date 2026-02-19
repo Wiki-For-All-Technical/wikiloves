@@ -5,15 +5,16 @@ import { getCampaignData } from '@/data/campaigns'
 const props = defineProps({
   slug: { type: String, required: true },
 })
+
 const campaignData = computed(() => getCampaignData(props.slug))
 
-const sortedYears = computed(() => {
+const chronologicalYears = computed(() => {
   const data = campaignData.value
   if (!data?.years) return []
-  return [...data.years].sort((a, b) => b.year - a.year)
+  return [...data.years].sort((a, b) => a.year - b.year)
 })
 
-const selectedYear = ref(null)
+const sortedYears = computed(() => [...chronologicalYears.value].reverse())
 
 const totals = computed(() => {
   const y = campaignData.value?.years || []
@@ -25,512 +26,468 @@ const totals = computed(() => {
   }
 })
 
-const displayStats = computed(() => {
-  if (selectedYear.value == null) return totals.value
-  const row = campaignData.value?.years?.find(r => r.year === selectedYear.value)
-  if (!row) return totals.value
-  return {
-    uploads: row.uploads ?? 0,
-    countries: row.countries ?? 0,
-    uploaders: row.uploaders ?? 0,
-    years: 1,
-  }
-})
-
-const tableRows = computed(() => {
-  if (selectedYear.value == null) return sortedYears.value
-  const row = sortedYears.value.find(r => r.year === selectedYear.value)
-  return row ? [row] : sortedYears.value
-})
-
 const formatNumber = (value) => (value != null ? value.toLocaleString() : '—')
 const formatPercent = (value) => (value != null ? `${value}%` : '—')
+
+const CHART_SERIES = [
+  { key: 'uploads', label: 'Uploads', color: '#10b981' },
+  { key: 'images_used', label: 'Images Used', color: '#86efac' },
+  { key: 'uploaders', label: 'Uploaders', color: '#2563eb' },
+  { key: 'new_uploaders', label: 'New Uploaders', color: '#93c5fd' },
+]
+
+const chartPad = { top: 30, right: 20, bottom: 50, left: 60 }
+const chartW = 960
+const chartH = 340
+const innerW = chartW - chartPad.left - chartPad.right
+const innerH = chartH - chartPad.top - chartPad.bottom
+
+const chartMaxVal = computed(() => {
+  let max = 0
+  for (const y of chronologicalYears.value) {
+    for (const s of CHART_SERIES) {
+      if ((y[s.key] || 0) > max) max = y[s.key]
+    }
+  }
+  const nice = Math.ceil(max / 10000) * 10000
+  return nice || 10000
+})
+
+const yTicks = computed(() => {
+  const m = chartMaxVal.value
+  const step = m / 5
+  return Array.from({ length: 6 }, (_, i) => Math.round(i * step))
+})
+
+function barX(yearIdx, seriesIdx) {
+  const n = chronologicalYears.value.length
+  const groupW = innerW / n
+  const barW = groupW * 0.7 / CHART_SERIES.length
+  const groupStart = chartPad.left + yearIdx * groupW + groupW * 0.15
+  return groupStart + seriesIdx * barW
+}
+
+function barW() {
+  const n = chronologicalYears.value.length
+  const groupW = innerW / n
+  return Math.max(4, groupW * 0.7 / CHART_SERIES.length)
+}
+
+function barY(value) {
+  return chartPad.top + innerH - (value / chartMaxVal.value) * innerH
+}
+
+function barHeight(value) {
+  return (value / chartMaxVal.value) * innerH
+}
+
+function yearLabelX(yearIdx) {
+  const n = chronologicalYears.value.length
+  const groupW = innerW / n
+  return chartPad.left + yearIdx * groupW + groupW / 2
+}
+
+function formatAxis(v) {
+  if (v >= 1000) return `${Math.round(v / 1000)}k`
+  return v
+}
 </script>
 
 <template>
-  <div class="campaign-page">
-    <header class="campaign-header">
-      <div class="campaign-header-inner">
-        <router-link to="/" class="campaign-back">
-          <span class="campaign-back-icon" aria-hidden="true">←</span>
-          <span>Wiki Loves</span>
-        </router-link>
-      </div>
-    </header>
-
+  <div class="page">
     <template v-if="campaignData">
-      <main class="campaign-main">
-        <section class="campaign-hero">
-          <span class="campaign-hero-label">Photo competition</span>
-          <h1 class="campaign-title">{{ campaignData.campaign_name }}</h1>
-          <p class="campaign-tagline">
-            Participation, uploads, and usage across Wikimedia wikis — explore by year below.
-          </p>
-          <div class="campaign-hero-line" aria-hidden="true" />
-        </section>
+      <div class="page-inner">
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <router-link to="/">Home</router-link>
+          <span class="sep">/</span>
+          <span class="current">{{ campaignData.campaign_name }}</span>
+        </nav>
 
-        <section class="campaign-milestones">
-          <h2 class="campaign-milestones-heading">Key numbers</h2>
-          <div class="campaign-milestones-grid">
-            <div class="milestone">
-              <span class="milestone-value">{{ formatNumber(displayStats.uploads) }}</span>
-              <span class="milestone-label">{{ selectedYear == null ? 'Total uploads' : 'Uploads' }}</span>
-            </div>
-            <div class="milestone">
-              <span class="milestone-value">{{ displayStats.years }}</span>
-              <span class="milestone-label">{{ selectedYear == null ? 'Editions' : 'Year' }}</span>
-            </div>
-            <div class="milestone">
-              <span class="milestone-value">{{ formatNumber(displayStats.uploaders) }}</span>
-              <span class="milestone-label">Uploaders</span>
-            </div>
-            <div class="milestone">
-              <span class="milestone-value">{{ displayStats.countries }}</span>
-              <span class="milestone-label">{{ selectedYear == null ? 'Countries (max)' : 'Countries' }}</span>
-            </div>
+        <!-- Hero -->
+        <header class="page-hero">
+          <h1 class="page-title">{{ campaignData.campaign_name }}</h1>
+          <p class="page-subtitle">Participation, uploads, and usage across Wikimedia wikis &mdash; explore by year below.</p>
+        </header>
+
+        <!-- Key Stats -->
+        <section class="stats-row">
+          <div class="stat-card stat-card--accent">
+            <span class="stat-value">{{ formatNumber(totals.uploads) }}</span>
+            <span class="stat-label">Total Uploads</span>
+          </div>
+          <div class="stat-card stat-card--green">
+            <span class="stat-value">{{ totals.years }}</span>
+            <span class="stat-label">Editions</span>
+          </div>
+          <div class="stat-card stat-card--purple">
+            <span class="stat-value">{{ formatNumber(totals.uploaders) }}</span>
+            <span class="stat-label">Uploaders</span>
+          </div>
+          <div class="stat-card stat-card--orange">
+            <span class="stat-value">{{ totals.countries }}</span>
+            <span class="stat-label">Countries (max)</span>
           </div>
         </section>
 
-        <section class="campaign-timeline-section">
-          <h2 class="campaign-timeline-title">Explore by year</h2>
-          <div class="campaign-timeline-track">
-            <button
-              type="button"
-              class="campaign-timeline-btn"
-              :class="{ active: selectedYear === null }"
-              @click="selectedYear = null"
-            >
-              All
-            </button>
-            <span class="campaign-timeline-connector" />
+        <!-- Year Pills -->
+        <section class="years-section">
+          <h2 class="section-heading">Explore by Year</h2>
+          <div class="year-pills">
             <router-link
-              v-for="(y, i) in sortedYears"
+              v-for="y in sortedYears"
               :key="y.year"
               :to="`/${slug}/${y.year}`"
-              class="campaign-timeline-btn"
-              :class="{ active: false }"
-            >
-              {{ y.year }}
-            </router-link>
+              class="year-pill"
+            >{{ y.year }}</router-link>
           </div>
         </section>
 
-        <section class="campaign-table-section">
-          <h2 class="campaign-section-title">Yearly breakdown</h2>
-          <div class="campaign-table-wrap">
-            <table class="campaign-table">
+        <!-- Yearly Chart -->
+        <section v-if="chronologicalYears.length" class="chart-section">
+          <h2 class="section-heading">Yearly Overview</h2>
+          <div class="chart-legend">
+            <span v-for="s in CHART_SERIES" :key="s.key" class="legend-item">
+              <span class="legend-dot" :style="{ background: s.color }"></span>
+              {{ s.label }}
+            </span>
+          </div>
+          <div class="chart-scroll">
+            <svg
+              :viewBox="`0 0 ${chartW} ${chartH}`"
+              preserveAspectRatio="xMidYMid meet"
+              class="bar-chart-svg"
+            >
+              <!-- Grid lines -->
+              <line
+                v-for="t in yTicks" :key="`g-${t}`"
+                :x1="chartPad.left" :x2="chartW - chartPad.right"
+                :y1="barY(t)" :y2="barY(t)"
+                stroke="#e2e8f0" stroke-width="1"
+              />
+              <!-- Y-axis labels -->
+              <text
+                v-for="t in yTicks" :key="`yl-${t}`"
+                :x="chartPad.left - 8" :y="barY(t) + 4"
+                text-anchor="end" class="axis-text"
+              >{{ formatAxis(t) }}</text>
+              <!-- Bars -->
+              <template v-for="(yr, yi) in chronologicalYears" :key="yr.year">
+                <rect
+                  v-for="(s, si) in CHART_SERIES" :key="`${yr.year}-${s.key}`"
+                  :x="barX(yi, si)" :y="barY(yr[s.key] || 0)"
+                  :width="barW()" :height="barHeight(yr[s.key] || 0)"
+                  :fill="s.color" rx="2"
+                >
+                  <title>{{ yr.year }} {{ s.label }}: {{ formatNumber(yr[s.key]) }}</title>
+                </rect>
+              </template>
+              <!-- X-axis labels -->
+              <text
+                v-for="(yr, yi) in chronologicalYears" :key="`xl-${yr.year}`"
+                :x="yearLabelX(yi)" :y="chartH - 12"
+                text-anchor="middle" class="axis-text"
+              >{{ yr.year }}</text>
+            </svg>
+          </div>
+        </section>
+
+        <!-- Table -->
+        <section class="table-section">
+          <h2 class="section-heading">Yearly Breakdown</h2>
+          <div class="table-wrap">
+            <table class="data-table">
               <thead>
                 <tr>
                   <th>Year</th>
-                  <th>Countries</th>
-                  <th>Uploads</th>
-                  <th>Images used in wikis</th>
-                  <th>Uploaders</th>
-                  <th>New uploaders</th>
+                  <th class="th-num">Countries</th>
+                  <th class="th-num">Uploads</th>
+                  <th class="th-num">Images Used</th>
+                  <th class="th-num">Uploaders</th>
+                  <th class="th-num">New Uploaders</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="row in tableRows" :key="row.year" :class="{ 'row-selected': selectedYear === row.year }">
-                  <td class="cell-year">
-                    <router-link :to="`/${slug}/${row.year}`" class="cell-year-link">{{ row.year }}</router-link>
+                <tr v-for="row in sortedYears" :key="row.year">
+                  <td class="td-year">
+                    <router-link :to="`/${slug}/${row.year}`" class="year-link">{{ row.year }}</router-link>
                   </td>
-                  <td class="cell-num">{{ formatNumber(row.countries) }}</td>
-                  <td class="cell-num">{{ formatNumber(row.uploads) }}</td>
-                  <td class="cell-num">
+                  <td class="td-num">{{ formatNumber(row.countries) }}</td>
+                  <td class="td-num">{{ formatNumber(row.uploads) }}</td>
+                  <td class="td-num">
                     {{ formatNumber(row.images_used) }}
-                    <span v-if="row.images_used_pct != null" class="cell-pct">{{ formatPercent(row.images_used_pct) }}</span>
+                    <span v-if="row.images_used_pct != null" class="pct">({{ formatPercent(row.images_used_pct) }})</span>
                   </td>
-                  <td class="cell-num">{{ formatNumber(row.uploaders) }}</td>
-                  <td class="cell-num">
+                  <td class="td-num">{{ formatNumber(row.uploaders) }}</td>
+                  <td class="td-num">
                     {{ formatNumber(row.new_uploaders) }}
-                    <span v-if="row.new_uploaders_pct != null" class="cell-pct">{{ formatPercent(row.new_uploaders_pct) }}</span>
+                    <span v-if="row.new_uploaders_pct != null" class="pct">({{ formatPercent(row.new_uploaders_pct) }})</span>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <p class="campaign-meta">Static data · Updated {{ campaignData.updated }}</p>
+          <p class="meta-text">Static data &middot; Updated {{ campaignData.updated }}</p>
         </section>
-      </main>
-
-      <footer class="campaign-footer">
-        <router-link to="/" class="campaign-footer-link">Back to Wiki Loves</router-link>
-      </footer>
+      </div>
     </template>
 
-    <div v-else class="campaign-not-found">
+    <div v-else class="not-found">
       <p>Campaign not found.</p>
-      <router-link to="/" class="campaign-footer-link">Back to Wiki Loves</router-link>
+      <router-link to="/">Back to Home</router-link>
     </div>
   </div>
 </template>
 
 <style scoped>
-.campaign-page {
-  min-height: 100vh;
-  background: linear-gradient(180deg, #f5f4f0 0%, #ebe8e2 50%, #f8f7f4 100%);
-  color: #1a1a1a;
-}
+.page { min-height: 100vh; }
 
-.campaign-header {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.campaign-header-inner {
+.page-inner {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 1rem 1.5rem;
+  padding: 2rem;
 }
 
-.campaign-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #991b1b;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.9375rem;
-  transition: color 0.2s ease;
+/* Breadcrumb */
+.breadcrumb {
+  font-size: 0.875rem;
+  margin-bottom: 2rem;
+  color: var(--text-muted);
+}
+.breadcrumb a { color: var(--color-accent); text-decoration: none; font-weight: 500; }
+.breadcrumb a:hover { text-decoration: underline; }
+.sep { margin: 0 0.5rem; }
+.current { color: var(--text-primary); font-weight: 600; }
+
+/* Hero */
+.page-hero { margin-bottom: 2.5rem; }
+.page-title {
+  margin: 0 0 0.5rem;
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+.page-subtitle {
+  margin: 0;
+  font-size: 1.0625rem;
+  color: var(--text-secondary);
+  max-width: 540px;
+  line-height: 1.6;
 }
 
-.campaign-back:hover {
-  color: #7f1d1d;
-}
-
-.campaign-back-icon {
-  font-size: 1.1rem;
-}
-
-.campaign-main {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 0 1.5rem 3rem;
-}
-
-.campaign-hero {
-  margin-bottom: 3rem;
-  padding: 3rem 0 2.5rem;
-}
-
-.campaign-hero-label {
-  display: block;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: #991b1b;
-  margin-bottom: 0.75rem;
-}
-
-.campaign-title {
-  margin: 0 0 0.75rem;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(2.25rem, 6vw, 3.25rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: #0f172a;
-  line-height: 1.15;
-}
-
-.campaign-tagline {
-  margin: 0 0 1.5rem;
-  font-size: 1.125rem;
-  line-height: 1.65;
-  color: #475569;
-  max-width: 520px;
-}
-
-.campaign-hero-line {
-  width: 3rem;
-  height: 3px;
-  background: linear-gradient(90deg, #991b1b, #b91c1c);
-  border-radius: 2px;
-}
-
-.campaign-milestones {
-  margin-bottom: 3rem;
-  padding: 2rem 2.25rem;
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.campaign-milestones-heading {
-  margin: 0 0 1.75rem;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #991b1b;
-  letter-spacing: 0.02em;
-}
-
-.campaign-milestones-grid {
+/* Stats */
+.stats-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2.5rem;
 }
 
-.milestone {
+.stat-card {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.375rem;
+  padding: 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
 }
 
-.milestone-value {
-  font-size: 2.25rem;
+.stat-card--accent { border-left-color: var(--color-accent); }
+.stat-card--green { border-left-color: var(--color-green); }
+.stat-card--purple { border-left-color: var(--color-purple); }
+.stat-card--orange { border-left-color: var(--color-orange); }
+
+.stat-value {
+  font-size: 2rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-primary);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.03em;
   line-height: 1.1;
 }
 
-.milestone-label {
+.stat-label {
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #64748b;
-}
-
-.campaign-timeline-section {
-  margin-bottom: 2.5rem;
-}
-
-.campaign-timeline-title {
-  margin: 0 0 1rem;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: #475569;
-  text-transform: uppercase;
   letter-spacing: 0.06em;
+  color: var(--text-secondary);
 }
 
-.campaign-timeline-track {
+/* Year pills */
+.years-section { margin-bottom: 2.5rem; }
+
+.section-heading {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.year-pills {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
+  gap: 0.5rem;
 }
 
-.campaign-timeline-connector {
-  width: 1px;
-  height: 1.25rem;
-  background: #cbd5e1;
-  margin: 0 0.15rem;
+.year-pill {
+  padding: 0.5rem 1.25rem;
+  border: 2px solid var(--border-color);
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: all 0.15s;
+  background: var(--bg-card);
+}
+
+.year-pill:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  text-decoration: none;
+  background: #eff6ff;
+}
+
+/* Chart */
+.chart-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.5rem 2rem;
+  margin-bottom: 2.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
   flex-shrink: 0;
 }
 
-.campaign-timeline-btn {
-  padding: 0.5rem 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  background: #fff;
-  color: #475569;
-  transition: all 0.2s ease;
-  display: inline-block;
-  text-decoration: none;
-}
-
-a.campaign-timeline-btn:hover {
-  border-color: #991b1b;
-  color: #991b1b;
-  background: #fef2f2;
-}
-
-.campaign-timeline-btn:hover {
-  border-color: #991b1b;
-  color: #991b1b;
-  background: #fef2f2;
-}
-
-.campaign-timeline-btn.active {
-  background: #991b1b;
-  border-color: #991b1b;
-  color: #fff;
-}
-
-.campaign-timeline-btn.active:hover,
-a.campaign-timeline-btn.router-link-active:hover {
-  background: #7f1d1d;
-  border-color: #7f1d1d;
-}
-
-a.campaign-timeline-btn.router-link-active {
-  background: #991b1b;
-  border-color: #991b1b;
-  color: #fff;
-}
-
-.campaign-table-section {
-  margin-bottom: 2rem;
-}
-
-.campaign-section-title {
-  margin: 0 0 1rem;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #334155;
-  letter-spacing: 0.02em;
-}
-
-.campaign-table-wrap {
+.chart-scroll {
   overflow-x: auto;
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-  background: #fff;
 }
 
-.campaign-table {
+.bar-chart-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-width: 700px;
+}
+
+.bar-chart-svg rect {
+  transition: opacity 0.15s;
+  cursor: pointer;
+}
+
+.bar-chart-svg rect:hover {
+  opacity: 0.8;
+}
+
+.axis-text {
+  font-size: 11px;
+  fill: var(--text-muted, #94a3b8);
+  font-weight: 500;
+}
+
+/* Table */
+.table-section { margin-bottom: 2rem; }
+
+.table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.data-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9375rem;
 }
 
-.campaign-table thead tr {
-  background: #1e293b;
+.data-table thead tr {
+  background: var(--bg-secondary);
+  border-bottom: 2px solid var(--border-color);
 }
 
-.campaign-table th {
-  padding: 1rem 1.25rem;
+.data-table th {
+  padding: 0.875rem 1.25rem;
   text-align: left;
-  font-weight: 600;
-  color: #f8fafc;
+  font-weight: 700;
+  color: var(--text-secondary);
   font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
 }
 
-.campaign-table th:first-child {
-  border-radius: 12px 0 0 0;
+.th-num { text-align: right; }
+
+.data-table td {
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
 }
 
-.campaign-table th:last-child {
-  border-radius: 0 12px 0 0;
-}
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover { background: var(--bg-hover); }
 
-.campaign-table td {
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid #f1f5f9;
-  color: #334155;
-}
+.td-year { font-weight: 700; }
+.year-link { color: var(--color-accent); text-decoration: none; font-weight: 700; }
+.year-link:hover { text-decoration: underline; }
 
-.campaign-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.campaign-table tbody tr:hover {
-  background: #f8fafc;
-}
-
-.campaign-table tbody tr.row-selected {
-  background: #fef2f2;
-}
-
-.cell-year {
-  font-weight: 700;
-}
-
-.cell-year-link {
-  color: #0366d6;
-  text-decoration: none;
-}
-
-.cell-year-link:hover {
-  text-decoration: underline;
-}
-
-.cell-num {
+.td-num {
   text-align: right;
   font-variant-numeric: tabular-nums;
-}
-
-.cell-pct {
-  margin-left: 0.35rem;
-  color: #64748b;
-  font-weight: 400;
-}
-
-.campaign-meta {
-  margin: 1rem 0 0;
-  font-size: 0.8125rem;
-  color: #94a3b8;
-}
-
-.campaign-footer {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
-  border-top: 2px solid rgba(153, 27, 27, 0.2);
-  text-align: center;
-  background: rgba(255, 255, 255, 0.7);
-}
-
-.campaign-footer-link {
-  color: #991b1b;
-  text-decoration: none;
   font-weight: 600;
-  font-size: 0.9375rem;
 }
 
-.campaign-footer-link:hover {
-  text-decoration: underline;
+.pct {
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 0.25rem;
 }
 
-.campaign-not-found {
+.meta-text {
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.not-found {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 3rem 1.5rem;
+  padding: 4rem 2rem;
   text-align: center;
-}
-
-.campaign-not-found p {
-  margin: 0 0 1rem;
-  color: #666;
 }
 
 @media (max-width: 768px) {
-  .campaign-main {
-    padding: 0 1rem 2rem;
-  }
-
-  .campaign-hero {
-    padding: 2rem 0 1.5rem;
-  }
-
-  .campaign-milestones {
-    padding: 1.5rem 1.25rem;
-  }
-
-  .campaign-milestones-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-  }
-
-  .milestone-value {
-    font-size: 1.75rem;
-  }
-
-  .campaign-timeline-connector {
-    display: none;
-  }
-
-  .campaign-table th,
-  .campaign-table td {
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .campaign-milestones-grid {
-    grid-template-columns: 1fr;
-  }
+  .page-inner { padding: 1.5rem; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .stat-value { font-size: 1.5rem; }
+  .data-table th, .data-table td { padding: 0.625rem 0.875rem; font-size: 0.875rem; }
 }
 </style>

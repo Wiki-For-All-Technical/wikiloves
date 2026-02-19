@@ -51,70 +51,65 @@ const tableRows = computed(() => {
   return []
 })
 
-const graphMax = computed(() => {
-  const y = yearData.value
-  if (!y) return 10000
-  return Math.max(y.uploads ?? 0, 1000)
-})
-
 const formatNumber = (v) => (v != null ? v.toLocaleString() : '—')
 const formatPercent = (v) => (v != null ? `${v}%` : '—')
 
 const barColors = [
-  '#16a34a', '#2563eb', '#9333ea', '#ca8a04', '#dc2626', '#0891b2', '#c026d3',
+  '#2563eb', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899',
   '#65a30d', '#4f46e5', '#ea580c', '#0d9488', '#be185d', '#84cc16', '#7c3aed',
 ]
 const barColor = (index) => barColors[index % barColors.length]
 </script>
 
 <template>
-  <div class="year-page">
-    <header class="year-header">
-      <div class="year-header-inner">
-        <router-link :to="campaignPath" class="year-back">
-          <span class="year-back-icon" aria-hidden="true">←</span>
-          <span>{{ campaignName }}</span>
-        </router-link>
-      </div>
-    </header>
-
+  <div class="page">
     <template v-if="yearData">
-      <main class="year-main">
-        <section class="year-hero">
-          <h1 class="year-title">{{ campaignName }} {{ yearNum }}</h1>
-          <p class="year-subtitle">Tool Labs – Tools for Wiki Loves Photo Competitions</p>
-        </section>
+      <div class="page-inner">
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <router-link to="/">Home</router-link>
+          <span class="sep">/</span>
+          <router-link :to="campaignPath">{{ campaignName }}</router-link>
+          <span class="sep">/</span>
+          <span class="current">{{ yearNum }}</span>
+        </nav>
 
-        <section class="year-stats-section" aria-label="Competition statistics">
-          <h2 class="year-stats-heading">Statistics</h2>
-          <div class="year-stats-grid">
-            <div class="year-stat-card">
-              <span class="year-stat-value">{{ formatNumber(yearData.uploads) }}</span>
-              <span class="year-stat-label">Total images</span>
-            </div>
-            <div class="year-stat-card">
-              <span class="year-stat-value">{{ formatNumber(yearData.images_used) }}</span>
-              <span class="year-stat-label">Images used in wikis</span>
-              <span v-if="yearData.images_used_pct != null" class="year-stat-meta">({{ yearData.images_used_pct }}%)</span>
-            </div>
-            <div class="year-stat-card">
-              <span class="year-stat-value">{{ formatNumber(yearData.countries) }}</span>
-              <span class="year-stat-label">Countries</span>
-            </div>
-            <div class="year-stat-card">
-              <span class="year-stat-value">{{ formatNumber(yearData.uploaders) }}</span>
-              <span class="year-stat-label">Uploaders</span>
-            </div>
-            <div class="year-stat-card">
-              <span class="year-stat-value">{{ formatNumber(yearData.new_uploaders) }}</span>
-              <span class="year-stat-label">New uploaders (after start)</span>
-              <span v-if="yearData.new_uploaders_pct != null" class="year-stat-meta">({{ yearData.new_uploaders_pct }}%)</span>
-            </div>
+        <!-- Hero -->
+        <header class="page-hero">
+          <h1 class="page-title">{{ campaignName }} {{ yearNum }}</h1>
+          <p class="page-subtitle">Tool Labs &ndash; Tools for Wiki Loves Photo Competitions</p>
+        </header>
+
+        <!-- Stats -->
+        <section class="stats-row">
+          <div class="stat-card stat-card--accent">
+            <span class="stat-value">{{ formatNumber(yearData.uploads) }}</span>
+            <span class="stat-label">Total Images</span>
+          </div>
+          <div class="stat-card stat-card--green">
+            <span class="stat-value">{{ formatNumber(yearData.images_used) }}</span>
+            <span class="stat-label">Images Used</span>
+            <span v-if="yearData.images_used_pct != null" class="stat-meta">({{ yearData.images_used_pct }}%)</span>
+          </div>
+          <div class="stat-card stat-card--purple">
+            <span class="stat-value">{{ formatNumber(yearData.countries) }}</span>
+            <span class="stat-label">Countries</span>
+          </div>
+          <div class="stat-card stat-card--orange">
+            <span class="stat-value">{{ formatNumber(yearData.uploaders) }}</span>
+            <span class="stat-label">Uploaders</span>
+          </div>
+          <div class="stat-card stat-card--teal">
+            <span class="stat-value">{{ formatNumber(yearData.new_uploaders) }}</span>
+            <span class="stat-label">New Uploaders</span>
+            <span v-if="yearData.new_uploaders_pct != null" class="stat-meta">({{ yearData.new_uploaders_pct }}%)</span>
           </div>
         </section>
 
-        <section class="year-graph-section">
-          <div class="year-graph-wrap" :class="{ 'year-graph-wrap--country': countryRows?.length }">
+        <!-- Chart -->
+        <section class="chart-section">
+          <h2 class="section-heading">Cumulative Uploads</h2>
+          <div class="chart-wrap">
             <CountryCumulativeChart
               v-if="countryRows?.length"
               :country-rows="countryRows"
@@ -123,354 +118,251 @@ const barColor = (index) => barColors[index % barColors.length]
             />
             <svg
               v-else
-              class="year-graph"
+              class="placeholder-graph"
               viewBox="0 0 400 180"
               preserveAspectRatio="none"
               aria-hidden="true"
             >
               <defs>
-                <linearGradient id="yearGraphGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="#16a34a" stop-opacity="0.3" />
-                  <stop offset="100%" stop-color="#16a34a" stop-opacity="0" />
+                <linearGradient id="yearGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#2563eb" stop-opacity="0.2" />
+                  <stop offset="100%" stop-color="#2563eb" stop-opacity="0" />
                 </linearGradient>
               </defs>
-              <line x1="40" y1="160" x2="380" y2="160" stroke="#e5e7eb" stroke-width="1" />
-              <line x1="40" y1="120" x2="380" y2="120" stroke="#e5e7eb" stroke-width="1" />
-              <line x1="40" y1="80" x2="380" y2="80" stroke="#e5e7eb" stroke-width="1" />
-              <line x1="40" y1="40" x2="380" y2="40" stroke="#e5e7eb" stroke-width="1" />
-              <polyline
-                class="year-graph-line"
-                :points="`40,160 80,${160 - (120 * (yearData.uploads || 0) / graphMax)} 160,${160 - (100 * (yearData.uploads || 0) / graphMax)} 240,${160 - (60 * (yearData.uploads || 0) / graphMax)} 320,${160 - (25 * (yearData.uploads || 0) / graphMax)} 380,20`"
-                fill="none"
-                stroke="#16a34a"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <polygon
-                class="year-graph-area"
-                :points="`40,160 80,${160 - (120 * (yearData.uploads || 0) / graphMax)} 160,${160 - (100 * (yearData.uploads || 0) / graphMax)} 240,${160 - (60 * (yearData.uploads || 0) / graphMax)} 320,${160 - (25 * (yearData.uploads || 0) / graphMax)} 380,20 380,160 40,160`"
-                fill="url(#yearGraphGrad)"
-              />
+              <line v-for="i in 4" :key="i" x1="40" :y1="40*i" x2="380" :y2="40*i" stroke="#e2e8f0" stroke-width="1" />
+              <polyline points="40,160 120,120 200,80 280,45 380,20" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+              <polygon points="40,160 120,120 200,80 280,45 380,20 380,160 40,160" fill="url(#yearGrad)" />
             </svg>
           </div>
-          <p class="year-graph-caption">Cumulative uploads over competition period</p>
         </section>
 
-        <section class="year-table-section">
-          <div class="year-table-wrap">
-            <table class="year-table">
+        <!-- Country Table -->
+        <section class="table-section">
+          <h2 class="section-heading">Country Breakdown</h2>
+          <div class="table-wrap">
+            <table class="data-table">
               <thead>
                 <tr>
-                  <th class="year-th-bar" aria-label="Rank" />
-                  <th class="year-th-rank">#</th>
+                  <th class="th-bar"></th>
+                  <th class="th-rank">#</th>
                   <th>Country</th>
-                  <th>Images*</th>
-                  <th>Images used in the wikis</th>
-                  <th>Uploaders</th>
-                  <th>Uploaders registered after competition start</th>
+                  <th class="th-num">Images</th>
+                  <th class="th-num">Images Used</th>
+                  <th class="th-num">Uploaders</th>
+                  <th class="th-num">New Uploaders</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(row, i) in tableRows" :key="row.country" class="year-row">
-                  <td class="year-td-bar">
-                    <span class="year-bar" :style="{ backgroundColor: barColor(i) }" />
+                <tr v-for="(row, i) in tableRows" :key="row.country">
+                  <td class="td-bar">
+                    <span class="color-dot" :style="{ background: barColor(i) }"></span>
                   </td>
-                  <td class="year-td-rank">{{ i + 1 }}</td>
-                  <td class="year-td-country">
-                    <router-link
-                      :to="`/${slug}/${yearNum}/${row.country}`"
-                      class="year-country-link"
-                    >
-                      {{ row.country }}
-                    </router-link>
+                  <td class="td-rank">{{ i + 1 }}</td>
+                  <td class="td-country">
+                    <router-link :to="`/${slug}/${yearNum}/${row.country}`" class="country-link">{{ row.country }}</router-link>
                   </td>
-                  <td class="year-td-num">{{ formatNumber(row.images) }}</td>
-                  <td class="year-td-num">
+                  <td class="td-num">{{ formatNumber(row.images) }}</td>
+                  <td class="td-num">
                     {{ formatNumber(row.images_used) }}
-                    <span v-if="row.images_used_pct != null" class="year-pct">({{ row.images_used_pct }}%)</span>
+                    <span v-if="row.images_used_pct != null" class="pct">({{ row.images_used_pct }}%)</span>
                   </td>
-                  <td class="year-td-num">{{ formatNumber(row.uploaders) }}</td>
-                  <td class="year-td-num">
+                  <td class="td-num">{{ formatNumber(row.uploaders) }}</td>
+                  <td class="td-num">
                     {{ formatNumber(row.new_uploaders) }}
-                    <span v-if="row.new_uploaders_pct != null" class="year-pct">({{ row.new_uploaders_pct }}%)</span>
+                    <span v-if="row.new_uploaders_pct != null" class="pct">({{ row.new_uploaders_pct }}%)</span>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
         </section>
-      </main>
+      </div>
     </template>
 
-    <div v-else class="year-not-found">
+    <div v-else class="not-found">
       <p>No data for this year.</p>
-      <router-link :to="campaignPath" class="year-back-link">Back to {{ campaignName }}</router-link>
+      <router-link :to="campaignPath">Back to {{ campaignName }}</router-link>
     </div>
   </div>
 </template>
 
 <style scoped>
-.year-page {
-  min-height: 100vh;
-  background: #fff;
-  color: #1a1a1a;
-}
+.page { min-height: 100vh; }
 
-.year-header {
-  border-bottom: 1px solid #e5e7eb;
-  background: #fff;
-}
-
-.year-header-inner {
-  max-width: 1000px;
+.page-inner {
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 1rem 1.5rem;
+  padding: 2rem;
 }
 
-.year-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #0366d6;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  text-decoration: none;
-}
-
-.year-back:hover {
-  text-decoration: underline;
-}
-
-.year-back-icon {
-  font-size: 1.1rem;
-}
-
-.year-main {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem 3rem;
-}
-
-.year-hero {
+.breadcrumb {
+  font-size: 0.875rem;
   margin-bottom: 2rem;
+  color: var(--text-muted);
 }
+.breadcrumb a { color: var(--color-accent); text-decoration: none; font-weight: 500; }
+.breadcrumb a:hover { text-decoration: underline; }
+.sep { margin: 0 0.5rem; }
+.current { color: var(--text-primary); font-weight: 600; }
 
-.year-title {
-  margin: 0 0 0.35rem;
-  font-size: clamp(1.75rem, 4vw, 2.25rem);
-  font-weight: 700;
-  color: #111;
-  line-height: 1.2;
+.page-hero { margin-bottom: 2rem; }
+.page-title {
+  margin: 0 0 0.375rem;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
 }
-
-.year-subtitle {
+.page-subtitle {
   margin: 0;
   font-size: 0.9375rem;
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
-.year-stats-section {
-  margin-bottom: 2rem;
-}
-
-.year-stats-heading {
-  margin: 0 0 1rem;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #374151;
-}
-
-.year-stats-grid {
+/* Stats */
+.stats-row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 1rem;
+  margin-bottom: 2.5rem;
 }
 
-.year-stat-card {
+.stat-card {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  padding: 1rem 1.25rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
 }
 
-.year-stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #111;
+.stat-card--accent { border-left-color: var(--color-accent); }
+.stat-card--green  { border-left-color: #10b981; }
+.stat-card--purple { border-left-color: #8b5cf6; }
+.stat-card--orange { border-left-color: #f59e0b; }
+.stat-card--teal   { border-left-color: #14b8a6; }
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-primary);
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
 
-.year-stat-label {
-  font-size: 0.8125rem;
-  color: #6b7280;
-  line-height: 1.3;
-}
-
-.year-stat-meta {
+.stat-label {
   font-size: 0.75rem;
-  color: #9ca3af;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
 }
 
-.year-graph-section {
-  margin-bottom: 2rem;
+.stat-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 
-.year-graph-wrap {
-  width: 100%;
-  height: 200px;
-  background: #f9fafb;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
+/* Chart */
+.chart-section { margin-bottom: 2.5rem; }
+
+.section-heading {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.chart-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
+  min-height: 200px;
 }
 
-.year-graph-wrap--country {
-  height: auto;
-  min-height: 280px;
-  overflow: visible;
-}
-
-.year-graph {
+.placeholder-graph {
   width: 100%;
-  height: 100%;
+  height: 180px;
   display: block;
 }
 
-.year-graph-caption {
-  margin: 0.5rem 0 0;
-  font-size: 0.8125rem;
-  color: #6b7280;
-}
+/* Table */
+.table-section { margin-bottom: 2rem; }
 
-.year-table-section {
-  margin-top: 1.5rem;
-}
-
-.year-table-wrap {
+.table-wrap {
   overflow-x: auto;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
 }
 
-.year-table {
+.data-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9375rem;
 }
 
-.year-table thead tr {
-  background: #f3f4f6;
-  border-bottom: 2px solid #e5e7eb;
+.data-table thead tr {
+  background: var(--bg-secondary);
+  border-bottom: 2px solid var(--border-color);
 }
 
-.year-table th {
-  padding: 0.75rem 1rem;
+.data-table th {
+  padding: 0.875rem 1rem;
   text-align: left;
-  font-weight: 600;
-  color: #374151;
-  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.05em;
 }
 
-.year-th-bar {
-  width: 12px;
-  padding: 0.5rem 0.25rem !important;
-  border-right: 1px solid #e5e7eb;
-}
+.th-bar { width: 20px; padding: 0.5rem !important; }
+.th-rank { width: 36px; text-align: center; }
+.th-num { text-align: right; }
 
-.year-th-rank {
-  width: 36px;
-  text-align: center;
-}
-
-.year-table td {
+.data-table td {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #f3f4f6;
-  color: #374151;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
 }
 
-.year-table tbody tr:last-child td {
-  border-bottom: none;
-}
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover { background: var(--bg-hover); }
 
-.year-table tbody tr:hover {
-  background: #f9fafb;
+.td-bar { width: 20px; padding: 0.5rem !important; vertical-align: middle; }
+.color-dot {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 50%;
 }
+.td-rank { text-align: center; font-weight: 600; color: var(--text-muted); }
+.td-country { font-weight: 600; }
+.country-link { color: var(--color-accent); text-decoration: none; }
+.country-link:hover { text-decoration: underline; }
+.td-num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.pct { color: var(--text-muted); font-weight: 400; margin-left: 0.25rem; }
 
-.year-td-bar {
-  width: 12px;
-  padding: 0.5rem 0.25rem !important;
-  vertical-align: middle;
-  border-right: 1px solid #e5e7eb;
-}
-
-.year-td-rank {
-  text-align: center;
-  font-weight: 600;
-  color: #6b7280;
-}
-
-.year-td-country {
-  font-weight: 500;
-}
-
-.year-country-link {
-  color: #0366d6;
-  cursor: pointer;
-}
-
-.year-country-link:hover {
-  text-decoration: underline;
-}
-
-.year-td-num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.year-pct {
-  margin-left: 0.25rem;
-  color: #6b7280;
-  font-weight: 400;
-}
-
-.year-not-found {
-  max-width: 1000px;
+.not-found {
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 3rem 1.5rem;
+  padding: 4rem 2rem;
   text-align: center;
-}
-
-.year-not-found p {
-  margin: 0 0 1rem;
-  color: #6b7280;
-}
-
-.year-back-link {
-  color: #0366d6;
-  font-size: 0.9375rem;
-  text-decoration: underline;
-}
-
-.year-back-link:hover {
-  color: #0550a0;
+  color: var(--text-secondary);
 }
 
 @media (max-width: 768px) {
-  .year-main {
-    padding: 1.5rem 1rem 2rem;
-  }
-
-  .year-table th,
-  .year-table td {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-  }
+  .page-inner { padding: 1.5rem; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .stat-value { font-size: 1.35rem; }
+  .data-table th, .data-table td { padding: 0.5rem 0.75rem; font-size: 0.875rem; }
 }
 </style>
