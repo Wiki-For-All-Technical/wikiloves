@@ -29,19 +29,101 @@ watchEffect(async () => {
 
 const campaignData = computed(() => apiData.value || getCampaignData(props.slug))
 
-const chronologicalYears = computed(() => {
+const allYears = computed(() => {
   const data = campaignData.value
   if (!data?.years) return []
   return [...data.years].sort((a, b) => a.year - b.year)
 })
 
+const yearRange = computed(() => {
+  if (!allYears.value.length) return { min: 2010, max: 2026 }
+  const years = allYears.value.map((y) => y.year)
+  return { min: Math.min(...years), max: Math.max(...years) }
+})
+
+const filterYearFrom = ref(null)
+const filterYearTo = ref(null)
+const metricFilter = ref('all')
+const selectedCountry = ref('')
+const countrySearchQuery = ref('')
+const countryDropdownOpen = ref(false)
+
+const METRIC_OPTIONS = [
+  { key: 'all', label: 'All metrics' },
+  { key: 'uploads', label: 'Uploads only' },
+  { key: 'images_used', label: 'Images Used only' },
+  { key: 'uploaders', label: 'Uploaders only' },
+  { key: 'new_uploaders', label: 'New Uploaders only' },
+]
+
+// Extract all unique country names across every year
+const allCountries = computed(() => {
+  const names = new Set()
+  for (const y of allYears.value) {
+    const rows = y.country_rows ?? y.country_stats ?? []
+    for (const r of rows) {
+      const name = r.country ?? r.name
+      if (name) names.add(name)
+    }
+  }
+  return [...names].sort()
+})
+
+const filteredCountryList = computed(() => {
+  if (!countrySearchQuery.value) return allCountries.value
+  const q = countrySearchQuery.value.toLowerCase()
+  return allCountries.value.filter((c) => c.toLowerCase().includes(q))
+})
+
+function selectCountry(c) {
+  selectedCountry.value = c
+  countrySearchQuery.value = ''
+  countryDropdownOpen.value = false
+}
+
+function clearCountry() {
+  selectedCountry.value = ''
+  countrySearchQuery.value = ''
+}
+
+// Helper: pull a country's row from a year entry
+function getCountryRow(yearEntry, countryName) {
+  const rows = yearEntry.country_rows ?? yearEntry.country_stats ?? []
+  return rows.find((r) => (r.country ?? r.name) === countryName)
+}
+
+// When a country is selected, project year-level data to that country's numbers
+const yearFilteredByCountry = computed(() => {
+  if (!selectedCountry.value) return allYears.value
+  return allYears.value.map((y) => {
+    const cr = getCountryRow(y, selectedCountry.value)
+    if (!cr) return null
+    return {
+      year: y.year,
+      countries: 1,
+      uploads: cr.images ?? cr.uploads ?? 0,
+      images_used: cr.images_used ?? 0,
+      images_used_pct: cr.images_used_pct ?? null,
+      uploaders: cr.uploaders ?? 0,
+      new_uploaders: cr.new_uploaders ?? 0,
+      new_uploaders_pct: cr.new_uploaders_pct ?? null,
+    }
+  }).filter(Boolean)
+})
+
+const chronologicalYears = computed(() => {
+  const from = filterYearFrom.value ?? yearRange.value.min
+  const to = filterYearTo.value ?? yearRange.value.max
+  return yearFilteredByCountry.value.filter((y) => y.year >= from && y.year <= to)
+})
+
 const sortedYears = computed(() => [...chronologicalYears.value].reverse())
 
 const totals = computed(() => {
-  const y = campaignData.value?.years || []
+  const y = chronologicalYears.value
   return {
     uploads: y.reduce((s, r) => s + (r.uploads || 0), 0),
-    countries: Math.max(0, ...y.map(r => r.countries || 0)),
+    countries: selectedCountry.value ? 1 : Math.max(0, ...y.map(r => r.countries || 0)),
     uploaders: y.reduce((s, r) => s + (r.uploaders || 0), 0),
     years: y.length,
   }
@@ -50,12 +132,17 @@ const totals = computed(() => {
 const formatNumber = (value) => (value != null ? value.toLocaleString() : '—')
 const formatPercent = (value) => (value != null ? `${value}%` : '—')
 
-const CHART_SERIES = [
+const ALL_CHART_SERIES = [
   { key: 'uploads', label: 'Uploads', color: '#10b981' },
   { key: 'images_used', label: 'Images Used', color: '#86efac' },
   { key: 'uploaders', label: 'Uploaders', color: '#2563eb' },
   { key: 'new_uploaders', label: 'New Uploaders', color: '#93c5fd' },
 ]
+
+const CHART_SERIES = computed(() => {
+  if (metricFilter.value === 'all') return ALL_CHART_SERIES
+  return ALL_CHART_SERIES.filter((s) => s.key === metricFilter.value)
+})
 
 const chartPad = { top: 30, right: 20, bottom: 50, left: 60 }
 const chartW = 960
@@ -66,7 +153,7 @@ const innerH = chartH - chartPad.top - chartPad.bottom
 const chartMaxVal = computed(() => {
   let max = 0
   for (const y of chronologicalYears.value) {
-    for (const s of CHART_SERIES) {
+    for (const s of CHART_SERIES.value) {
       if ((y[s.key] || 0) > max) max = y[s.key]
     }
   }
@@ -83,15 +170,15 @@ const yTicks = computed(() => {
 function barX(yearIdx, seriesIdx) {
   const n = chronologicalYears.value.length
   const groupW = innerW / n
-  const barW = groupW * 0.7 / CHART_SERIES.length
+  const bw = groupW * 0.7 / CHART_SERIES.value.length
   const groupStart = chartPad.left + yearIdx * groupW + groupW * 0.15
-  return groupStart + seriesIdx * barW
+  return groupStart + seriesIdx * bw
 }
 
 function barW() {
   const n = chronologicalYears.value.length
   const groupW = innerW / n
-  return Math.max(4, groupW * 0.7 / CHART_SERIES.length)
+  return Math.max(4, groupW * 0.7 / CHART_SERIES.value.length)
 }
 
 function barY(value) {
@@ -111,6 +198,13 @@ function yearLabelX(yearIdx) {
 function formatAxis(v) {
   if (v >= 1000) return `${Math.round(v / 1000)}k`
   return v
+}
+
+function yearLink(year) {
+  const base = `/${props.slug}/${year}`
+  return selectedCountry.value
+    ? { path: base, query: { country: selectedCountry.value } }
+    : base
 }
 </script>
 
@@ -163,9 +257,68 @@ function formatAxis(v) {
             <router-link
               v-for="y in sortedYears"
               :key="y.year"
-              :to="`/${slug}/${y.year}`"
+              :to="yearLink(y.year)"
               class="year-pill"
             >{{ y.year }}</router-link>
+          </div>
+        </section>
+
+        <!-- Filters -->
+        <section class="filter-section">
+          <div class="filter-bar">
+            <div class="filter-group">
+              <label class="filter-label">From</label>
+              <select v-model.number="filterYearFrom" class="filter-select">
+                <option :value="null">{{ yearRange.min }}</option>
+                <option v-for="y in allYears" :key="y.year" :value="y.year">{{ y.year }}</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label class="filter-label">To</label>
+              <select v-model.number="filterYearTo" class="filter-select">
+                <option :value="null">{{ yearRange.max }}</option>
+                <option v-for="y in allYears" :key="y.year" :value="y.year">{{ y.year }}</option>
+              </select>
+            </div>
+            <div class="filter-group filter-group--country">
+              <label class="filter-label">Country</label>
+              <div class="country-picker" @mouseleave="countryDropdownOpen = false">
+                <div class="country-picker-input" @click="countryDropdownOpen = !countryDropdownOpen">
+                  <span v-if="selectedCountry" class="country-selected">
+                    {{ selectedCountry }}
+                    <button class="country-clear" @click.stop="clearCountry" title="Clear">&times;</button>
+                  </span>
+                  <input
+                    v-else
+                    v-model="countrySearchQuery"
+                    type="text"
+                    class="country-search"
+                    placeholder="All countries"
+                    @focus="countryDropdownOpen = true"
+                    @input="countryDropdownOpen = true"
+                  />
+                </div>
+                <ul v-if="countryDropdownOpen && filteredCountryList.length" class="country-dropdown">
+                  <li
+                    v-for="c in filteredCountryList"
+                    :key="c"
+                    class="country-option"
+                    :class="{ active: selectedCountry === c }"
+                    @click="selectCountry(c)"
+                  >{{ c }}</li>
+                </ul>
+              </div>
+            </div>
+            <div class="filter-group">
+              <label class="filter-label">Metric</label>
+              <select v-model="metricFilter" class="filter-select">
+                <option v-for="o in METRIC_OPTIONS" :key="o.key" :value="o.key">{{ o.label }}</option>
+              </select>
+            </div>
+            <span v-if="selectedCountry || chronologicalYears.length !== allYears.length" class="filter-count">
+              <template v-if="selectedCountry">{{ selectedCountry }} &middot; </template>
+              {{ chronologicalYears.length }} year{{ chronologicalYears.length !== 1 ? 's' : '' }}
+            </span>
           </div>
         </section>
 
@@ -236,7 +389,7 @@ function formatAxis(v) {
               <tbody>
                 <tr v-for="row in sortedYears" :key="row.year">
                   <td class="td-year">
-                    <router-link :to="`/${slug}/${row.year}`" class="year-link">{{ row.year }}</router-link>
+                    <router-link :to="yearLink(row.year)" class="year-link">{{ row.year }}</router-link>
                   </td>
                   <td class="td-num">{{ formatNumber(row.countries) }}</td>
                   <td class="td-num">{{ formatNumber(row.uploads) }}</td>
@@ -378,6 +531,128 @@ function formatAxis(v) {
   text-decoration: none;
   background: #eff6ff;
 }
+
+/* Filters */
+.filter-section { margin-bottom: 1.5rem; }
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.filter-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.filter-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.filter-select:focus { outline: none; border-color: var(--color-accent); }
+
+.filter-count {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Country picker */
+.filter-group--country { position: relative; }
+
+.country-picker { position: relative; min-width: 180px; }
+
+.country-picker-input {
+  display: flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-card);
+  cursor: pointer;
+  min-height: 34px;
+}
+
+.country-search {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  width: 100%;
+}
+.country-search::placeholder { color: var(--text-muted); }
+
+.country-selected {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.country-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg-secondary, #f1f5f9);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+.country-clear:hover { background: #fecaca; color: #ef4444; }
+
+.country-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  min-width: 200px;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 50;
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0;
+}
+
+.country-option {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.country-option:hover { background: var(--bg-hover, #f3f4f6); }
+.country-option.active { background: #eff6ff; color: var(--color-accent); font-weight: 600; }
 
 /* Chart */
 .chart-section {
@@ -536,5 +811,6 @@ function formatAxis(v) {
   .stats-row { grid-template-columns: 1fr 1fr; }
   .stat-value { font-size: 1.5rem; }
   .data-table th, .data-table td { padding: 0.625rem 0.875rem; font-size: 0.875rem; }
+  .filter-bar { flex-direction: column; align-items: stretch; }
 }
 </style>

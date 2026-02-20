@@ -16,6 +16,9 @@ shared/
 logs/
 *.log
 
+# Built Vue frontend (deployed via deploy_frontend.sh)
+src/static/
+
 # Database credentials (should be in $HOME/.my.cnf on Toolforge)
 *.cnf
 .my.cnf

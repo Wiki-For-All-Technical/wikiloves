@@ -1,10 +1,11 @@
 import axios from 'axios'
 
-// Use proxy in development to avoid CORS, direct API in production
+// Dev: Vite proxy handles /toolforge-api → Toolforge
+// Prod: frontend is served from the same origin, so /api works directly
 const isDev = import.meta.env.DEV
-const TOOLFORGE_API_BASE = isDev 
-  ? '/toolforge-api'  // Use proxy in development
-  : 'https://wikiloves-data.toolforge.org/api'  // Direct API in production
+const TOOLFORGE_API_BASE = isDev
+  ? '/toolforge-api'
+  : (import.meta.env.VITE_API_BASE ?? '/api')
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE ?? TOOLFORGE_API_BASE,

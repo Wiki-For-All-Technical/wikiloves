@@ -1,67 +1,50 @@
 """
 Toolforge Flask application for Wiki Loves campaign data fetching.
 Main entry point for the web service.
+
+Serves both the Vue SPA frontend (static files) and the /api/* JSON backend.
 """
 
-from flask import Flask, render_template
+from flask import Flask, send_from_directory, jsonify
 from flask_cors import CORS
 import os
 import sys
+import secrets
 
-# Add src directory to path for imports
 sys.path.insert(0, os.path.dirname(__file__))
 
 from routes import register_routes
 from config import Config
+from auth import auth_bp
+from campaign_admin import admin_bp
 
 _src_dir = os.path.abspath(os.path.dirname(__file__))
-_template_dir = os.path.join(_src_dir, 'templates')
-app = Flask(__name__, template_folder=_template_dir)
-CORS(app)
+_static_dir = os.path.join(_src_dir, 'static')
 
-# Load configuration
+app = Flask(__name__, static_folder=_static_dir, static_url_path='')
+CORS(app, supports_credentials=True)
+
 app.config.from_object(Config)
 
-# Register routes
-register_routes(app)
-
-
-def _index_html():
-    """Render landing page; fallback to minimal HTML if template is missing."""
+_secret_file = Config.SHARED_STORAGE / 'flask_secret_key'
+if _secret_file.is_file():
+    app.secret_key = _secret_file.read_text().strip()
+else:
+    app.secret_key = secrets.token_hex(32)
     try:
-        return render_template('index.html', version='1.0.0')
-    except Exception as e:
-        # Log so we can see why template failed (check: toolforge webservice python3.13 logs)
-        import logging
-        logging.warning('Index template failed, using fallback: %s', e)
-        # Fallback if templates/ not deployed or template fails
-        return (
-            '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
-            '<meta name="viewport" content="width=device-width,initial-scale=1">'
-            '<title>Wiki Loves Data Fetcher</title></head><body style="'
-            'font-family:system-ui,sans-serif;max-width:720px;margin:2rem auto;padding:0 1rem;'
-            'background:#0f1419;color:#e6edf3;">'
-            '<h1 style="font-size:1.5rem;">Wiki Loves Data Fetcher</h1>'
-            '<p style="color:#8b949e;">Campaign statistics from Wikimedia Commons.</p>'
-            '<p><span style="color:#3fb950;">●</span> Running · Version 1.0.0</p>'
-            '<p><a href="/api/health" style="color:#58a6ff;">Health</a> · '
-            '<a href="/api/campaigns" style="color:#58a6ff;">Campaigns</a> · '
-            '<a href="/api/status" style="color:#58a6ff;">Status</a> · '
-            '<a href="/api" style="color:#58a6ff;">API (JSON)</a></p>'
-            '</body></html>'
-        ), 200, {'Content-Type': 'text/html; charset=utf-8'}
+        _secret_file.write_text(app.secret_key)
+    except OSError:
+        pass
 
-
-@app.route('/')
-def index():
-    """Landing page with service info and API endpoints."""
-    return _index_html()
+register_routes(app)
+app.register_blueprint(auth_bp)
+app.register_blueprint(admin_bp)
 
 
 @app.route('/api')
 def api_info():
     """JSON API info for programmatic access."""
-    return {
+    return jsonify({
         "service": "Wiki Loves Data Fetcher",
         "version": "1.0.0",
         "status": "running",
@@ -77,9 +60,31 @@ def api_info():
             "fetch_campaign_year": "/api/fetch/<campaign_slug>/<year>",
             "prebuild": "/api/prebuild (POST - warm country + uploaders cache)",
             "logs": "/api/logs",
-            "test_earth_2025_germany": "/api/test/earth-2025-germany (GET - run Earth 2025 Germany queries)"
         }
-    }
+    })
+
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_frontend(path):
+    """Serve Vue SPA. Static assets are returned directly; all other
+    paths get index.html so Vue Router can handle client-side routing."""
+    if path and os.path.isfile(os.path.join(_static_dir, path)):
+        return send_from_directory(_static_dir, path)
+    index_file = os.path.join(_static_dir, 'index.html')
+    if os.path.isfile(index_file):
+        return send_from_directory(_static_dir, 'index.html')
+    return (
+        '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
+        '<meta name="viewport" content="width=device-width,initial-scale=1">'
+        '<title>Wiki Loves Data</title></head><body style="'
+        'font-family:system-ui,sans-serif;max-width:720px;margin:2rem auto;padding:0 1rem;'
+        'background:#0f1419;color:#e6edf3;">'
+        '<h1 style="font-size:1.5rem;">Wiki Loves Data</h1>'
+        '<p style="color:#8b949e;">Frontend not yet deployed. '
+        'API is available at <a href="/api" style="color:#58a6ff;">/api</a>.</p>'
+        '</body></html>'
+    ), 200, {'Content-Type': 'text/html; charset=utf-8'}
 
 
 if __name__ == "__main__":

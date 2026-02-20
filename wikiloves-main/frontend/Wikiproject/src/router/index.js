@@ -103,6 +103,11 @@ const router = createRouter({
       component: () => import('../views/CampaignCountryUsersView.vue'),
     },
     {
+      path: '/admin/campaigns',
+      name: 'admin-campaigns',
+      component: () => import('../views/AdminCampaignsView.vue'),
+    },
+    {
       path: '/:segment/:year/:country',
       name: 'campaign-country-year',
       component: () => import('../views/CampaignCountryView.vue'),
